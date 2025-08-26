@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grocery Planner Pro</title>
+    <!-- Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .transition-all { transition: all 0.3s ease-in-out; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        .checked-item { text-decoration: line-through; color: #9ca3af; }
+        
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.5); display: flex; align-items: center;
+            justify-content: center; z-index: 50; opacity: 0; visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content {
+            background: white; padding: 2rem; border-radius: 1rem; max-width: 95%;
+            width: 1000px; max-height: 90vh; overflow-y: auto;
+            transform: scale(0.95); transition: transform 0.3s;
+        }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+
+        /* Toast Notification Styles */
+        #toast {
+            position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
+            padding: 1rem 2rem; border-radius: 0.5rem; color: white;
+            font-weight: 500; z-index: 100; transition: bottom 0.5s ease-in-out;
+        }
+        #toast.show { bottom: 30px; }
+        .toast-success { background-color: #28a745; }
+        .toast-error { background-color: #dc3545; }
+        
+        /* Tab Styles */
+        .tab-button.active {
+            border-color: #4f46e5; /* indigo-600 */
+            color: #4f46e5;
+            background-color: #eef2ff; /* indigo-50 */
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-5xl">
+        <header class="text-center mb-4 relative">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900">Grocery Planner Pro</h1>
+            <p class="text-gray-600 mt-2">Your smart shopping companion.</p>
+             <!-- Hamburger Button -->
+             <button id="hamburger-btn" class="md:hidden absolute top-1/2 -translate-y-1/2 right-0 p-2 rounded-md text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+                <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+             </button>
+        </header>
+
+        <!-- Action Buttons -->
+        <nav id="main-nav" class="hidden md:flex flex-col md:flex-row flex-wrap gap-3 justify-center mb-8 bg-white md:bg-transparent p-4 md:p-0 rounded-lg shadow-lg md:shadow-none">
+            <button id="manage-items-btn" class="bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700 font-semibold transition-all w-full md:w-auto">Manage Items</button>
+            <button id="planner-recipes-btn" class="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 font-semibold transition-all w-full md:w-auto">Meal Planner & Recipes</button>
+            <button id="view-reports-btn" class="bg-purple-600 text-white px-5 py-2 rounded-lg hover:bg-purple-700 font-semibold transition-all w-full md:w-auto">View Reports</button>
+            <button id="export-data-btn" class="bg-gray-700 text-white px-5 py-2 rounded-lg hover:bg-gray-800 font-semibold transition-all w-full md:w-auto">Export</button>
+            <button id="import-data-btn" class="bg-gray-700 text-white px-5 py-2 rounded-lg hover:bg-gray-800 font-semibold transition-all w-full md:w-auto">Import</button>
+            <input type="file" id="import-file-input" class="hidden" accept=".json">
+        </nav>
+
+        <main class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Left Column: Current Shopping List -->
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <div class="flex justify-between items-center mb-4 border-b pb-2"><h2 class="text-2xl font-semibold">Current Shopping List</h2><button id="clear-list-btn" class="text-sm text-red-500 hover:text-red-700 font-medium transition-all">Clear List</button></div>
+                <div id="shopping-list-container" class="space-y-4 min-h-[200px]"><p id="empty-list-message" class="text-gray-500 text-center pt-16">Your list is empty.</p></div>
+                <div class="mt-6 pt-4 border-t"><div class="flex justify-between items-center font-bold text-xl"><span>Total:</span><span id="total-price">$0.00</span></div><button id="finish-shopping-btn" class="w-full bg-blue-600 text-white mt-4 py-3 rounded-lg hover:bg-blue-700 transition-all font-bold text-lg">Finish Shopping & Save</button></div>
+            </div>
+
+            <!-- Right Column: Shopping History -->
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h2 class="text-2xl font-semibold mb-4 border-b pb-2">Shopping History</h2>
+                <div id="past-lists-container" class="space-y-4 max-h-[500px] overflow-y-auto pr-2"><p id="empty-history-message" class="text-gray-500">No past shopping lists.</p></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="items-modal" class="modal-overlay">
+        <div class="modal-content" style="width: 600px;">
+            <div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-semibold">Manage Grocery Items</h2><button id="close-items-modal-btn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button></div>
+            <div class="flex gap-2 mb-4"><input type="text" id="new-item-input" placeholder="New item name" class="flex-grow p-3 border rounded-lg"><input type="text" id="new-item-category-input" placeholder="Category" class="flex-grow p-3 border rounded-lg"><button id="add-item-btn" class="bg-green-600 text-white px-4 rounded-lg hover:bg-green-700 font-semibold">+</button></div>
+            <div id="grocery-items-container" class="space-y-2 max-h-96 overflow-y-auto pr-2"></div>
+        </div>
+    </div>
+    <div id="reports-modal" class="modal-overlay">
+        <div class="modal-content"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-semibold">Monthly Spending Report</h2><button id="close-reports-modal-btn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button></div><div id="reports-content"></div></div>
+    </div>
+    <div id="planner-recipes-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4"><h2 class="text-3xl font-bold">Meal Planner & Recipes</h2><button id="close-planner-modal-btn" class="text-gray-500 hover:text-gray-800 text-3xl">&times;</button></div>
+            <div class="border-b border-gray-200 mb-4">
+                <nav class="-mb-px flex space-x-4" id="planner-tabs">
+                    <button data-tab="planner" class="tab-button active whitespace-nowrap py-3 px-1 border-b-2 font-medium text-lg">Meal Planner</button>
+                    <button data-tab="recipes" class="tab-button whitespace-nowrap py-3 px-1 border-b-2 font-medium text-lg">Recipe Book</button>
+                </nav>
+            </div>
+            <div id="planner-content" class="tab-content active"></div>
+            <div id="recipes-content" class="tab-content"></div>
+        </div>
+    </div>
+    <div id="add-meal-item-modal" class="modal-overlay">
+        <div class="modal-content" style="width: 500px;">
+            <div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-semibold" id="add-meal-item-modal-title">Add to Meal</h2><button id="close-add-meal-item-modal-btn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button></div>
+            <div id="meal-item-selection-container" class="max-h-96 overflow-y-auto p-2 border rounded-lg"></div>
+            <button id="save-meal-items-btn" class="w-full bg-green-600 text-white py-2 rounded-lg mt-4">Add Selected</button>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // --- INDEXEDDB SETUP ---
+            const DB_NAME = 'GroceryAppDB';
+            const DB_VERSION = 3;
+            let db;
+
+            function openDB() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(DB_NAME, DB_VERSION);
+                    request.onerror = (event) => reject("Error opening DB: " + event.target.errorCode);
+                    request.onsuccess = (event) => { db = event.target.result; resolve(db); };
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains('groceryItems')) db.createObjectStore('groceryItems', { keyPath: 'id' });
+                        if (!db.objectStoreNames.contains('currentShoppingList')) db.createObjectStore('currentShoppingList', { keyPath: 'id' });
+                        if (!db.objectStoreNames.contains('pastShoppingLists')) db.createObjectStore('pastShoppingLists', { keyPath: 'id', autoIncrement: true });
+                        if (!db.objectStoreNames.contains('recipes')) db.createObjectStore('recipes', { keyPath: 'id', autoIncrement: true });
+                        if (!db.objectStoreNames.contains('mealPlan')) db.createObjectStore('mealPlan', { keyPath: 'id' });
+                    };
+                });
+            }
+
+            function dbTransaction(storeName, mode, action) {
+                return new Promise((resolve, reject) => {
+                    if (!db) { reject("DB not initialized"); return; }
+                    const transaction = db.transaction(storeName, mode);
+                    const store = transaction.objectStore(storeName);
+                    const request = action(store);
+                    transaction.oncomplete = () => resolve(request.result);
+                    transaction.onerror = (event) => reject(event.target.error);
+                });
+            }
+
+            // --- DATA STATE ---
+            let groceryItems = [], currentShoppingList = [], pastShoppingLists = [], recipes = [], mealPlan = {};
+            let currentMealTarget = { day: null, meal: null };
+
+            // --- DOM ELEMENTS ---
+            const shoppingListContainer = document.getElementById('shopping-list-container');
+            const pastListsContainer = document.getElementById('past-lists-container');
+            const totalPriceEl = document.getElementById('total-price');
+            const toastEl = document.getElementById('toast');
+            const emptyListMessage = document.getElementById('empty-list-message');
+            const emptyHistoryMessage = document.getElementById('empty-history-message');
+            const clearListBtn = document.getElementById('clear-list-btn');
+            const finishShoppingBtn = document.getElementById('finish-shopping-btn');
+            const exportDataBtn = document.getElementById('export-data-btn');
+            const importDataBtn = document.getElementById('import-data-btn');
+            const importFileInput = document.getElementById('import-file-input');
+            const hamburgerBtn = document.getElementById('hamburger-btn');
+            const mainNav = document.getElementById('main-nav');
+            
+            // --- UTILITY FUNCTIONS ---
+            const showToast = (message, type = 'success') => {
+                toastEl.textContent = message;
+                toastEl.className = type === 'success' ? 'toast-success' : 'toast-error';
+                toastEl.classList.add('show');
+                setTimeout(() => toastEl.classList.remove('show'), 3000);
+            };
+            const capitalize = s => s && s.charAt(0).toUpperCase() + s.slice(1);
+
+            // --- DATA LOADING ---
+            async function loadDataFromDB() {
+                groceryItems = await dbTransaction('groceryItems', 'readonly', store => store.getAll()) || [];
+                currentShoppingList = await dbTransaction('currentShoppingList', 'readonly', store => store.getAll()) || [];
+                pastShoppingLists = await dbTransaction('pastShoppingLists', 'readonly', store => store.getAll()) || [];
+                recipes = await dbTransaction('recipes', 'readonly', store => store.getAll()) || [];
+                const plan = await dbTransaction('mealPlan', 'readonly', store => store.get('currentWeek'));
+                mealPlan = plan ? plan.days : {};
+
+                if (groceryItems.length === 0) {
+                    const defaultItems = [ { id: Date.now() + 1, name: 'Apples', category: 'Produce', priceHistory: [] }, { id: Date.now() + 2, name: 'Milk', category: 'Dairy', priceHistory: [] }, { id: Date.now() + 3, name: 'Bread', category: 'Bakery', priceHistory: [] } ];
+                    for (const item of defaultItems) await dbTransaction('groceryItems', 'readwrite', store => store.put(item));
+                    groceryItems = defaultItems;
+                }
+            }
+
+            // --- RENDER FUNCTIONS ---
+            const renderAll = () => {
+                renderShoppingList();
+                renderPastLists();
+                renderGroceryItemsManager();
+                renderRecipeBook();
+                renderMealPlanner();
+            };
+
+            const renderShoppingList = () => {
+                shoppingListContainer.innerHTML = '';
+                emptyListMessage.classList.toggle('hidden', currentShoppingList.length > 0);
+                if (currentShoppingList.length > 0) {
+                    currentShoppingList.sort((a,b) => a.name.localeCompare(b.name)).forEach(item => {
+                        const itemEl = document.createElement('div');
+                        itemEl.className = `p-2 rounded-lg ${item.purchased ? 'bg-gray-100' : ''}`;
+                        itemEl.innerHTML = `<div class="flex items-center gap-3"><input type="checkbox" data-id="${item.id}" class="toggle-purchased-cb h-5 w-5" ${item.purchased ? 'checked' : ''}><span class="flex-grow font-semibold ${item.purchased ? 'checked-item' : ''}">${item.name}</span><div class="flex items-center"><span class="text-gray-500 mr-1">$</span><input type="number" data-id="${item.id}" value="${item.price || ''}" placeholder="0.00" class="price-input w-20 text-right p-1 border rounded-md"></div><button data-id="${item.id}" class="remove-from-list-btn text-red-500 hover:text-red-700 p-1 text-xl">&times;</button></div><div class="flex items-center gap-2 pl-8 mt-1"><label class="text-sm">Qty:</label><input type="number" data-id="${item.id}" value="${item.quantity || 1}" class="quantity-input w-16 p-1 border rounded-md"><label class="text-sm">Unit:</label><input type="text" data-id="${item.id}" value="${item.unit || ''}" placeholder="e.g., lbs, oz" class="unit-input flex-grow p-1 border rounded-md"></div>`;
+                        shoppingListContainer.appendChild(itemEl);
+                    });
+                } else {
+                    shoppingListContainer.appendChild(emptyListMessage);
+                }
+                calculateTotal();
+            };
+
+            const renderPastLists = () => {
+                pastListsContainer.innerHTML = '';
+                emptyHistoryMessage.classList.toggle('hidden', pastShoppingLists.length > 0);
+                if (pastShoppingLists.length > 0) {
+                    pastShoppingLists.sort((a,b) => b.id - a.id).forEach(list => {
+                        const listEl = document.createElement('div');
+                        listEl.className = 'bg-gray-100 p-4 rounded-lg';
+                        const total = list.items.reduce((acc, item) => acc + (parseFloat(item.price) || 0), 0);
+                        listEl.innerHTML = `<div class="flex justify-between items-center font-semibold"><h3>List from ${list.date}</h3><div class="flex items-center gap-2"><span>Total: $${total.toFixed(2)}</span><button data-id="${list.id}" class="edit-past-list-btn text-blue-500 hover:text-blue-700 p-1">Edit</button></div></div>`;
+                        pastListsContainer.appendChild(listEl);
+                    });
+                } else {
+                    pastListsContainer.appendChild(emptyHistoryMessage);
+                }
+            };
+
+            const renderGroceryItemsManager = () => {
+                const container = document.getElementById('grocery-items-container');
+                 container.innerHTML = '';
+                const categories = [...new Set(groceryItems.map(item => item.category || 'Uncategorized'))].sort();
+                categories.forEach(category => {
+                    const categoryWrapper = document.createElement('div');
+                    categoryWrapper.innerHTML = `<h3 class="font-semibold text-lg text-gray-700 mb-2">${category}</h3>`;
+                    groceryItems.filter(item => (item.category || 'Uncategorized') === category).sort((a,b) => a.name.localeCompare(b.name)).forEach(item => {
+                        const isAdded = currentShoppingList.some(shopItem => shopItem.id === item.id);
+                        const itemEl = document.createElement('div');
+                        itemEl.className = 'flex justify-between items-center p-2 rounded-lg';
+                        itemEl.innerHTML = `<span>${item.name}</span><div class="flex items-center gap-2"><button data-id="${item.id}" class="add-to-list-btn text-xs font-bold py-1 px-3 rounded-full ${isAdded ? 'bg-gray-300' : 'bg-green-100 text-green-800'}" ${isAdded ? 'disabled' : ''}>${isAdded ? 'Added' : 'Add'}</button><button data-id="${item.id}" class="delete-grocery-item-btn text-red-500 hover:text-red-700 p-1 text-xl">&times;</button></div>`;
+                        categoryWrapper.appendChild(itemEl);
+                    });
+                    container.appendChild(categoryWrapper);
+                });
+            };
+
+            const renderSpendingReport = () => { /* ... same as before ... */ };
+
+            // --- RECIPE & PLANNER RENDER FUNCTIONS ---
+            const renderRecipeBook = () => {
+                const container = document.getElementById('recipes-content');
+                container.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-3 gap-6"><div class="md:col-span-1"><h3 class="text-xl font-semibold mb-2">My Recipes</h3><div id="recipe-list" class="space-y-2 max-h-96 overflow-y-auto pr-2 border rounded-lg p-2"></div></div><div id="recipe-details" class="md:col-span-2 p-4 border rounded-lg bg-gray-50"></div></div>`;
+                const recipeListEl = document.getElementById('recipe-list');
+                if (recipes.length > 0) {
+                    recipeListEl.innerHTML = recipes.map(r => `<div data-id="${r.id}" class="recipe-item p-2 rounded-md cursor-pointer hover:bg-indigo-100">${r.name}</div>`).join('');
+                } else {
+                    recipeListEl.innerHTML = `<p class="text-gray-500">No recipes yet.</p>`;
+                }
+                renderAddRecipeForm();
+            };
+
+            const renderAddRecipeForm = () => {
+                const detailsContainer = document.getElementById('recipe-details');
+                detailsContainer.innerHTML = `<h3 class="text-xl font-semibold mb-2">Add a New Recipe</h3><div id="add-recipe-form"><input type="text" id="new-recipe-name" placeholder="Recipe Name" class="w-full p-2 border rounded-md mb-2"><h4 class="font-semibold mb-1">Ingredients</h4><div id="new-recipe-ingredients" class="space-y-2 mb-2"></div><button id="add-ingredient-field-btn" type="button" class="text-sm text-blue-600 hover:underline mb-4">+ Add Ingredient</button><button id="save-recipe-btn" class="w-full bg-green-600 text-white py-2 rounded-lg">Save New Recipe</button></div>`;
+                addIngredientField();
+            };
+
+            const renderSelectedRecipe = (recipe) => {
+                const detailsContainer = document.getElementById('recipe-details');
+                let ingredientsHtml = recipe.ingredients.map(ing => `<li>${ing.quantity || ''} ${ing.unit || ''} ${ing.name}</li>`).join('');
+                detailsContainer.innerHTML = `<div class="flex justify-between items-start"><h3 class="text-2xl font-bold mb-2">${recipe.name}</h3><button data-id="${recipe.id}" class="edit-recipe-btn text-sm bg-gray-200 px-3 py-1 rounded-md hover:bg-gray-300">Edit</button></div><h4 class="font-semibold mb-1">Ingredients</h4><ul class="list-disc pl-5 mb-4">${ingredientsHtml}</ul><button data-id="${recipe.id}" class="add-recipe-to-list-btn w-full bg-blue-600 text-white py-2 rounded-lg mb-2">Add Ingredients to Shopping List</button><button id="show-add-recipe-form-btn" class="text-sm text-gray-600 hover:underline">← Back to Add Recipe</button>`;
+            };
+            
+            const renderEditRecipeForm = (recipe) => {
+                const detailsContainer = document.getElementById('recipe-details');
+                let ingredientsHtml = recipe.ingredients.map(ing => `<div class="grid grid-cols-5 gap-2 ingredient-field"><input type="text" value="${ing.name}" placeholder="Name" class="col-span-2 p-2 border rounded-md ing-name"><input type="number" value="${ing.quantity || ''}" placeholder="Qty" class="p-2 border rounded-md ing-qty"><input type="text" value="${ing.unit || ''}" placeholder="Unit" class="col-span-1 p-2 border rounded-md ing-unit"><button class="remove-ingredient-btn text-red-500 hover:text-red-700">Remove</button></div>`).join('');
+                detailsContainer.innerHTML = `<h3 class="text-xl font-semibold mb-2">Editing: ${recipe.name}</h3><div id="edit-recipe-form"><input type="text" id="edit-recipe-name" value="${recipe.name}" class="w-full p-2 border rounded-md mb-2"><h4 class="font-semibold mb-1">Ingredients</h4><div id="edit-recipe-ingredients" class="space-y-2 mb-2">${ingredientsHtml}</div><button id="add-ingredient-field-edit-btn" type="button" class="text-sm text-blue-600 hover:underline mb-4">+ Add Ingredient</button><button id="update-recipe-btn" data-id="${recipe.id}" class="w-full bg-green-600 text-white py-2 rounded-lg mb-2">Save Changes</button><button id="cancel-edit-btn" data-id="${recipe.id}" class="text-sm text-gray-600 hover:underline">Cancel</button></div>`;
+            };
+
+            const renderMealPlanner = () => {
+                const container = document.getElementById('planner-content');
+                const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                let plannerHtml = `<div class="space-y-4">`;
+                days.forEach(day => {
+                    const dayKey = day.toLowerCase();
+                    plannerHtml += `<div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start"><h3 class="font-bold text-lg pt-2">${day}</h3><div class="bg-gray-50 p-2 rounded-lg">${generateMealSlotHtml(dayKey, 'lunch')}</div><div class="bg-gray-50 p-2 rounded-lg">${generateMealSlotHtml(dayKey, 'dinner')}</div></div>`;
+                });
+                plannerHtml += `<div class="mt-6 pt-4 border-t"><button id="add-weekly-ingredients-btn" class="w-full bg-purple-600 text-white py-3 rounded-lg font-bold text-lg">Add All Weekly Ingredients to List</button></div></div>`;
+                container.innerHTML = plannerHtml;
+            };
+
+            const generateMealSlotHtml = (dayKey, mealKey) => {
+                let mealItemsHtml = `<div class="text-gray-500 text-sm">Empty</div>`;
+                const mealData = mealPlan[dayKey]?.[mealKey];
+                if (mealData && mealData.length > 0) {
+                    mealItemsHtml = mealData.map((mealItem, index) => {
+                        let name = 'Unknown';
+                        if (mealItem.type === 'recipe') {
+                            const recipe = recipes.find(r => r.id === mealItem.id);
+                            if (recipe) name = `(R) ${recipe.name}`;
+                        } else if (mealItem.type === 'item') {
+                            const item = groceryItems.find(i => i.id === mealItem.id);
+                            if (item) name = item.name;
+                        }
+                        return `<div class="flex justify-between items-center text-sm bg-white p-1 rounded-md mb-1"><span>${name}</span><button data-day="${dayKey}" data-meal="${mealKey}" data-index="${index}" class="remove-meal-item-btn text-red-400 hover:text-red-600 font-bold px-1">&times;</button></div>`;
+                    }).join('');
+                }
+                return `<h4 class="font-semibold capitalize">${mealKey}</h4><div class="mt-1 space-y-1">${mealItemsHtml}</div><button data-day="${dayKey}" data-meal="${mealKey}" class="add-to-meal-btn text-sm text-blue-600 hover:underline mt-2">+ Add to Meal</button>`;
+            };
+
+            const populateMealItemSelector = () => {
+                const container = document.getElementById('meal-item-selection-container');
+                let content = `<div><h4 class="font-bold my-2">Recipes</h4>` + recipes.map(r => `<div class="flex items-center"><input type="checkbox" id="sel-recipe-${r.id}" value="recipe-${r.id}" class="meal-item-checkbox h-4 w-4 mr-2"><label for="sel-recipe-${r.id}">${r.name}</label></div>`).join('') + `</div>`;
+                content += `<div><h4 class="font-bold my-2">Individual Items</h4>` + groceryItems.map(i => `<div class="flex items-center"><input type="checkbox" id="sel-item-${i.id}" value="item-${i.id}" class="meal-item-checkbox h-4 w-4 mr-2"><label for="sel-item-${i.id}">${i.name}</label></div>`).join('') + `</div>`;
+                container.innerHTML = content;
+            };
+
+            // --- LOGIC FUNCTIONS ---
+            const calculateTotal = () => {
+                const total = currentShoppingList.reduce((acc, item) => item.purchased ? acc + (parseFloat(item.price) || 0) : acc, 0);
+                totalPriceEl.textContent = `$${total.toFixed(2)}`;
+            };
+            
+            const addIngredientField = (containerId = 'new-recipe-ingredients') => {
+                const container = document.getElementById(containerId);
+                const field = document.createElement('div');
+                field.className = 'grid grid-cols-5 gap-2 ingredient-field';
+                field.innerHTML = `<input type="text" placeholder="Name" class="col-span-2 p-2 border rounded-md ing-name"><input type="number" placeholder="Qty" class="p-2 border rounded-md ing-qty"><input type="text" placeholder="Unit" class="col-span-1 p-2 border rounded-md ing-unit"><button class="remove-ingredient-btn text-red-500 hover:text-red-700">Remove</button>`;
+                container.appendChild(field);
+            };
+
+            async function addItemToShoppingList(itemData, quantity = 1, unit = '') {
+                const existingItem = currentShoppingList.find(i => i.id === itemData.id);
+                if (existingItem) {
+                    existingItem.quantity = (parseFloat(existingItem.quantity) || 0) + (parseFloat(quantity) || 0);
+                    await dbTransaction('currentShoppingList', 'readwrite', store => store.put(existingItem));
+                } else {
+                    const shoppingItem = { ...itemData, purchased: false, price: '', quantity, unit };
+                    await dbTransaction('currentShoppingList', 'readwrite', store => store.put(shoppingItem));
+                    currentShoppingList.push(shoppingItem);
+                }
+            }
+
+            async function addRecipeIngredientsToList(recipeId) {
+                const recipe = recipes.find(r => r.id === recipeId);
+                if (!recipe) return;
+                let itemsAddedCount = 0;
+                for (const ing of recipe.ingredients) {
+                    const groceryItem = groceryItems.find(gi => gi.name.toLowerCase() === ing.name.toLowerCase());
+                    if (groceryItem) {
+                        if (!currentShoppingList.some(i => i.id === groceryItem.id)) itemsAddedCount++;
+                        await addItemToShoppingList(groceryItem, ing.quantity, ing.unit);
+                    }
+                }
+                renderShoppingList();
+                showToast(`${itemsAddedCount} new item(s) added from '${recipe.name}'.`);
+            }
+            
+            async function addWeeklyIngredientsToList() {
+                const weeklyIngredients = {};
+                for (const dayPlan of Object.values(mealPlan)) {
+                    for (const mealArray of Object.values(dayPlan)) {
+                        for (const mealItem of mealArray) {
+                            if (mealItem.type === 'recipe') {
+                                const recipe = recipes.find(r => r.id === mealItem.id);
+                                if (recipe) {
+                                    recipe.ingredients.forEach(ing => {
+                                        const key = ing.name.toLowerCase();
+                                        if (!weeklyIngredients[key]) weeklyIngredients[key] = { name: ing.name, quantity: 0, unit: ing.unit };
+                                        weeklyIngredients[key].quantity += parseFloat(ing.quantity) || 0;
+                                    });
+                                }
+                            } else if (mealItem.type === 'item') {
+                                const item = groceryItems.find(i => i.id === mealItem.id);
+                                if (item) {
+                                    const key = item.name.toLowerCase();
+                                    if (!weeklyIngredients[key]) weeklyIngredients[key] = { name: item.name, quantity: 0, unit: '' };
+                                    weeklyIngredients[key].quantity += 1;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                let itemsAddedCount = 0;
+                for (const ing of Object.values(weeklyIngredients)) {
+                    const groceryItem = groceryItems.find(gi => gi.name.toLowerCase() === ing.name.toLowerCase());
+                    if (groceryItem) {
+                         if (!currentShoppingList.some(i => i.id === groceryItem.id)) itemsAddedCount++;
+                        await addItemToShoppingList(groceryItem, ing.quantity, ing.unit);
+                    }
+                }
+                renderShoppingList();
+                showToast(`${itemsAddedCount} new item(s) added from your meal plan.`);
+            }
+
+            // --- EVENT LISTENERS ---
+            hamburgerBtn.addEventListener('click', () => {
+                mainNav.classList.toggle('hidden');
+            });
+
+            document.getElementById('manage-items-btn').addEventListener('click', () => document.getElementById('items-modal').classList.add('active'));
+            document.getElementById('close-items-modal-btn').addEventListener('click', () => document.getElementById('items-modal').classList.remove('active'));
+            document.getElementById('view-reports-btn').addEventListener('click', () => { renderSpendingReport(); document.getElementById('reports-modal').classList.add('active'); });
+            document.getElementById('close-reports-modal-btn').addEventListener('click', () => document.getElementById('reports-modal').classList.remove('active'));
+            document.getElementById('planner-recipes-btn').addEventListener('click', () => document.getElementById('planner-recipes-modal').classList.add('active'));
+            document.getElementById('close-planner-modal-btn').addEventListener('click', () => document.getElementById('planner-recipes-modal').classList.remove('active'));
+            document.getElementById('close-add-meal-item-modal-btn').addEventListener('click', () => document.getElementById('add-meal-item-modal').classList.remove('active'));
+
+            document.getElementById('planner-tabs').addEventListener('click', (e) => {
+                if (e.target.classList.contains('tab-button')) {
+                    const tabName = e.target.dataset.tab;
+                    document.querySelectorAll('#planner-tabs .tab-button').forEach(btn => btn.classList.remove('active'));
+                    e.target.classList.add('active');
+                    document.querySelectorAll('#planner-recipes-modal .tab-content').forEach(content => content.classList.remove('active'));
+                    document.getElementById(`${tabName}-content`).classList.add('active');
+                }
+            });
+
+            document.getElementById('planner-recipes-modal').addEventListener('click', async (e) => {
+                const target = e.target;
+                if (target.id === 'add-ingredient-field-btn') addIngredientField();
+                if (target.id === 'add-ingredient-field-edit-btn') addIngredientField('edit-recipe-ingredients');
+                if (target.classList.contains('remove-ingredient-btn')) target.closest('.ingredient-field').remove();
+                if (target.classList.contains('recipe-item')) renderSelectedRecipe(recipes.find(r => r.id === parseInt(target.dataset.id)));
+                if (target.id === 'show-add-recipe-form-btn') renderAddRecipeForm();
+                if (target.classList.contains('add-recipe-to-list-btn')) addRecipeIngredientsToList(parseInt(target.dataset.id));
+                if (target.id === 'add-weekly-ingredients-btn') addWeeklyIngredientsToList();
+                if (target.classList.contains('edit-recipe-btn')) renderEditRecipeForm(recipes.find(r => r.id === parseInt(target.dataset.id)));
+                if (target.id === 'cancel-edit-btn') renderSelectedRecipe(recipes.find(r => r.id === parseInt(target.dataset.id)));
+
+                if (target.id === 'save-recipe-btn') {
+                    const name = document.getElementById('new-recipe-name').value.trim();
+                    if (!name) { showToast('Recipe name is required.', 'error'); return; }
+                    const ingredients = [];
+                    document.querySelectorAll('#new-recipe-ingredients .ingredient-field').forEach(field => {
+                        const ingName = field.querySelector('.ing-name').value.trim();
+                        if (ingName) ingredients.push({ name: ingName, quantity: parseFloat(field.querySelector('.ing-qty').value) || null, unit: field.querySelector('.ing-unit').value.trim() || null });
+                    });
+                    const newRecipe = { name, ingredients };
+                    const newId = await dbTransaction('recipes', 'readwrite', store => store.add(newRecipe));
+                    recipes.push({ id: newId, ...newRecipe });
+                    renderRecipeBook();
+                    renderMealPlanner();
+                    showToast('Recipe saved!');
+                }
+
+                if (target.id === 'update-recipe-btn') {
+                    const recipeId = parseInt(target.dataset.id);
+                    const recipeToUpdate = recipes.find(r => r.id === recipeId);
+                    if (!recipeToUpdate) return;
+                    recipeToUpdate.name = document.getElementById('edit-recipe-name').value.trim();
+                    recipeToUpdate.ingredients = [];
+                    document.querySelectorAll('#edit-recipe-ingredients .ingredient-field').forEach(field => {
+                        const ingName = field.querySelector('.ing-name').value.trim();
+                        if (ingName) recipeToUpdate.ingredients.push({ name: ingName, quantity: parseFloat(field.querySelector('.ing-qty').value) || null, unit: field.querySelector('.ing-unit').value.trim() || null });
+                    });
+                    await dbTransaction('recipes', 'readwrite', store => store.put(recipeToUpdate));
+                    renderSelectedRecipe(recipeToUpdate);
+                    renderMealPlanner();
+                    showToast('Recipe updated!');
+                }
+
+                if (target.classList.contains('add-to-meal-btn')) {
+                    currentMealTarget.day = target.dataset.day;
+                    currentMealTarget.meal = target.dataset.meal;
+                    document.getElementById('add-meal-item-modal-title').textContent = `Add to ${capitalize(currentMealTarget.meal)} on ${capitalize(currentMealTarget.day)}`;
+                    populateMealItemSelector();
+                    document.getElementById('add-meal-item-modal').classList.add('active');
+                }
+
+                if (target.classList.contains('remove-meal-item-btn')) {
+                    const { day, meal, index } = target.dataset;
+                    if (mealPlan[day]?.[meal]) {
+                        mealPlan[day][meal].splice(index, 1);
+                        await dbTransaction('mealPlan', 'readwrite', store => store.put({ id: 'currentWeek', days: mealPlan }));
+                        renderMealPlanner();
+                        showToast('Item removed from meal.');
+                    }
+                }
+            });
+
+            document.getElementById('save-meal-items-btn').addEventListener('click', async () => {
+                const { day, meal } = currentMealTarget;
+                if (!day || !meal) return;
+                if (!mealPlan[day]) mealPlan[day] = {};
+                if (!mealPlan[day][meal]) mealPlan[day][meal] = [];
+                document.querySelectorAll('.meal-item-checkbox:checked').forEach(checkbox => {
+                    const [type, id] = checkbox.value.split('-');
+                    if (!mealPlan[day][meal].some(item => item.type === type && item.id === parseInt(id))) {
+                        mealPlan[day][meal].push({ type, id: parseInt(id) });
+                    }
+                });
+                await dbTransaction('mealPlan', 'readwrite', store => store.put({ id: 'currentWeek', days: mealPlan }));
+                renderMealPlanner();
+                document.getElementById('add-meal-item-modal').classList.remove('active');
+                showToast('Meal updated.');
+            });
+            
+            // --- INITIALIZATION ---
+            await openDB();
+            await loadDataFromDB();
+            renderAll();
+        });
+    </script>
+</body>
+</html>
