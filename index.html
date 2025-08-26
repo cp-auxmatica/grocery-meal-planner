@@ -3,525 +3,1661 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grocery Planner Pro</title>
-    <!-- Tailwind CSS for modern styling -->
+    <title>Home Budget App</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .transition-all { transition: all 0.3s ease-in-out; }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #555; }
-        .checked-item { text-decoration: line-through; color: #9ca3af; }
-        
-        /* Modal Styles */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.5); display: flex; align-items: center;
-            justify-content: center; z-index: 50; opacity: 0; visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s;
+        body {
+            font-family: 'Inter', sans-serif;
         }
-        .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-content {
-            background: white; padding: 2rem; border-radius: 1rem; max-width: 95%;
-            width: 1000px; max-height: 90vh; overflow-y: auto;
-            transform: scale(0.95); transition: transform 0.3s;
+        .modal {
+            display: none;
         }
-        .modal-overlay.active .modal-content { transform: scale(1); }
-
-        /* Toast Notification Styles */
-        #toast {
-            position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
-            padding: 1rem 2rem; border-radius: 0.5rem; color: white;
-            font-weight: 500; z-index: 100; transition: bottom 0.5s ease-in-out;
+        .modal.active {
+            display: flex;
         }
-        #toast.show { bottom: 30px; }
-        .toast-success { background-color: #28a745; }
-        .toast-error { background-color: #dc3545; }
-        
-        /* Tab Styles */
-        .tab-button.active {
-            border-color: #4f46e5; /* indigo-600 */
-            color: #4f46e5;
-            background-color: #eef2ff; /* indigo-50 */
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
         }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-gray-100 text-gray-800">
 
-    <div class="container mx-auto p-4 md:p-8 max-w-5xl">
-        <header class="text-center mb-4 relative">
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-900">Grocery Planner Pro</h1>
-            <p class="text-gray-600 mt-2">Your smart shopping companion.</p>
-             <!-- Hamburger Button -->
-             <button id="hamburger-btn" class="md:hidden absolute top-1/2 -translate-y-1/2 right-0 p-2 rounded-md text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
-                <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-             </button>
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-bold text-gray-900">Home Budget Dashboard</h1>
+            <p class="text-lg text-gray-600 mt-2">Your personal finance manager</p>
         </header>
 
-        <!-- Action Buttons -->
-        <nav id="main-nav" class="hidden md:flex flex-col md:flex-row flex-wrap gap-3 justify-center mb-8 bg-white md:bg-transparent p-4 md:p-0 rounded-lg shadow-lg md:shadow-none">
-            <button id="manage-items-btn" class="bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700 font-semibold transition-all w-full md:w-auto">Manage Items</button>
-            <button id="planner-recipes-btn" class="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 font-semibold transition-all w-full md:w-auto">Meal Planner & Recipes</button>
-            <button id="view-reports-btn" class="bg-purple-600 text-white px-5 py-2 rounded-lg hover:bg-purple-700 font-semibold transition-all w-full md:w-auto">View Reports</button>
-            <button id="export-data-btn" class="bg-gray-700 text-white px-5 py-2 rounded-lg hover:bg-gray-800 font-semibold transition-all w-full md:w-auto">Export</button>
-            <button id="import-data-btn" class="bg-gray-700 text-white px-5 py-2 rounded-lg hover:bg-gray-800 font-semibold transition-all w-full md:w-auto">Import</button>
-            <input type="file" id="import-file-input" class="hidden" accept=".json">
+        <!-- Main Navigation -->
+        <nav class="bg-white rounded-lg shadow-md p-4 mb-8 flex flex-wrap justify-center gap-4">
+            <button onclick="showView('dashboardView')" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300">Dashboard</button>
+            <button onclick="showView('incomeView')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition duration-300">Income</button>
+            <button onclick="showView('expensesView')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition duration-300">Expenses</button>
+            <button onclick="showView('subscriptionsView')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition duration-300">Subscriptions</button>
+            <button onclick="showView('budgetsView')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition duration-300">Budgets</button>
+            <button onclick="showView('reportsView')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition duration-300">Reports</button>
+            <button onclick="showView('settingsView')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition duration-300">Settings</button>
         </nav>
 
-        <main class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Left Column: Current Shopping List -->
-            <div class="bg-white p-6 rounded-2xl shadow-lg">
-                <div class="flex justify-between items-center mb-4 border-b pb-2"><h2 class="text-2xl font-semibold">Current Shopping List</h2><button id="clear-list-btn" class="text-sm text-red-500 hover:text-red-700 font-medium transition-all">Clear List</button></div>
-                <div id="shopping-list-container" class="space-y-4 min-h-[200px]"><p id="empty-list-message" class="text-gray-500 text-center pt-16">Your list is empty.</p></div>
-                <div class="mt-6 pt-4 border-t"><div class="flex justify-between items-center font-bold text-xl"><span>Total:</span><span id="total-price">$0.00</span></div><button id="finish-shopping-btn" class="w-full bg-blue-600 text-white mt-4 py-3 rounded-lg hover:bg-blue-700 transition-all font-bold text-lg">Finish Shopping & Save</button></div>
+        <main id="app">
+            <!-- Dashboard View -->
+            <div id="dashboardView" class="view">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold mb-2">Monthly Summary</h3>
+                        <p>Total Income: <span id="summaryIncome" class="font-bold text-green-600">$0.00</span></p>
+                        <p>Total Expenses: <span id="summaryExpenses" class="font-bold text-red-600">$0.00</span></p>
+                        <p>Net Balance: <span id="summaryBalance" class="font-bold text-blue-600">$0.00</span></p>
+                    </div>
+                     <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold mb-2">Upcoming Birthdays</h3>
+                        <ul id="upcomingBirthdays" class="list-disc list-inside"></ul>
+                    </div>
+                </div>
             </div>
 
-            <!-- Right Column: Shopping History -->
-            <div class="bg-white p-6 rounded-2xl shadow-lg">
-                <h2 class="text-2xl font-semibold mb-4 border-b pb-2">Shopping History</h2>
-                <div id="past-lists-container" class="space-y-4 max-h-[500px] overflow-y-auto pr-2"><p id="empty-history-message" class="text-gray-500">No past shopping lists.</p></div>
+            <!-- Income View -->
+            <div id="incomeView" class="view hidden">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-4">Manage Income</h2>
+                    <form id="incomeForm" class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                        <input type="hidden" id="incomeId">
+                        <input type="text" id="incomeName" placeholder="Name (e.g., Salary)" class="p-2 border rounded-md" required>
+                        <input type="text" id="incomeSource" placeholder="Source (e.g., Employer)" class="p-2 border rounded-md" required>
+                        <select id="incomeType" class="p-2 border rounded-md">
+                            <option value="recurring">Recurring</option>
+                            <option value="one-time">One-Time</option>
+                        </select>
+                        <input type="number" step="0.01" id="incomeAmount" placeholder="Amount" class="p-2 border rounded-md" required>
+                        <div class="md:col-span-2">
+                            <input type="date" id="incomeDate" class="p-2 border rounded-md w-full hidden">
+                        </div>
+                        <button type="submit" class="md:col-span-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300">Add/Update Income</button>
+                    </form>
+                    <div class="mt-6">
+                        <h3 class="text-xl font-semibold mb-2">Income List</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white">
+                                <thead class="bg-gray-200">
+                                    <tr>
+                                        <th class="py-2 px-4 text-left">Name</th>
+                                        <th class="py-2 px-4 text-left">Source</th>
+                                        <th class="py-2 px-4 text-left">Type</th>
+                                        <th class="py-2 px-4 text-right">Amount</th>
+                                        <th class="py-2 px-4 text-left">Date</th>
+                                        <th class="py-2 px-4 text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="incomeList"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expenses View -->
+            <div id="expensesView" class="view hidden">
+                <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <h2 class="text-2xl font-bold mb-4">Expense Calendar</h2>
+                    <div class="flex items-center justify-between mb-4">
+                        <button id="prevMonth" class="px-3 py-1 bg-gray-200 rounded-md hover:bg-gray-300">&lt;</button>
+                        <h3 id="calendarHeader" class="text-xl font-semibold"></h3>
+                        <button id="nextMonth" class="px-3 py-1 bg-gray-200 rounded-md hover:bg-gray-300">&gt;</button>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1 text-center font-semibold mb-2">
+                        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                    </div>
+                    <div id="calendarGrid" class="grid grid-cols-7 gap-1">
+                        <!-- Calendar days will be generated here -->
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-4">Track Expenses</h2>
+                    <form id="expenseForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="hidden" id="expenseId">
+                        <input type="text" id="expensePayee" placeholder="Payee/Store" class="p-2 border rounded-md" required>
+                        <select id="expenseCategory" class="p-2 border rounded-md"></select>
+                        <select id="expenseSubcategory" class="p-2 border rounded-md"></select>
+                        <select id="expensePaymentType" class="p-2 border rounded-md"></select>
+                        <input type="number" step="0.01" id="expenseAmount" placeholder="Amount" class="p-2 border rounded-md" required>
+                        <input type="date" id="expenseDate" class="p-2 border rounded-md" required>
+                        <button type="submit" class="md:col-span-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Add/Update Expense</button>
+                    </form>
+                    <div class="mt-6">
+                        <h3 class="text-xl font-semibold mb-2">Recent Expenses</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white">
+                                <thead class="bg-gray-200">
+                                    <tr>
+                                        <th class="py-2 px-4 text-left">Payee</th>
+                                        <th class="py-2 px-4 text-left">Category</th>
+                                        <th class="py-2 px-4 text-left">Payment Type</th>
+                                        <th class="py-2 px-4 text-right">Amount</th>
+                                        <th class="py-2 px-4 text-left">Date</th>
+                                        <th class="py-2 px-4 text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="expenseList"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Subscriptions View -->
+            <div id="subscriptionsView" class="view hidden">
+                 <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="mb-6 bg-blue-50 p-4 rounded-lg">
+                        <h3 class="text-lg font-semibold text-blue-800">Total Monthly Subscription Cost</h3>
+                        <p id="totalSubscriptionCost" class="text-3xl font-bold text-blue-600">$0.00</p>
+                    </div>
+                    <h2 class="text-2xl font-bold mb-4">Manage Subscriptions</h2>
+                    <form id="subscriptionForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="hidden" id="subscriptionId">
+                        <input type="text" id="subscriptionName" placeholder="Subscription Name (e.g., Netflix)" class="p-2 border rounded-md" required>
+                        <input type="number" step="0.01" id="subscriptionAmount" placeholder="Monthly Cost" class="p-2 border rounded-md" required>
+                        <input type="date" id="subscriptionStartDate" class="p-2 border rounded-md" required>
+                        <select id="subscriptionPaymentMethod" class="p-2 border rounded-md"></select>
+                        <button type="submit" class="md:col-span-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Add/Update Subscription</button>
+                    </form>
+                    <div class="mt-6">
+                        <h3 class="text-xl font-semibold mb-2">Active Subscriptions</h3>
+                        <div class="overflow-x-auto">
+                           <table class="min-w-full bg-white">
+                                <thead class="bg-gray-200">
+                                    <tr>
+                                        <th class="py-2 px-4 text-left">Name</th>
+                                        <th class="py-2 px-4 text-right">Amount</th>
+                                        <th class="py-2 px-4 text-left">Start Date</th>
+                                        <th class="py-2 px-4 text-left">Payment Method</th>
+                                        <th class="py-2 px-4 text-left">Status</th>
+                                        <th class="py-2 px-4 text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="subscriptionList"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Budgets View -->
+            <div id="budgetsView" class="view hidden">
+                <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <h2 class="text-2xl font-bold mb-4">Budget Summary</h2>
+                    <div id="budgetPaymentMethodSummary" class="mb-4 border-b pb-4"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                        <div class="p-4 bg-green-100 rounded-lg">
+                            <p class="text-sm text-green-800">Recurring Income</p>
+                            <p id="summaryRecurringIncome" class="text-2xl font-bold text-green-600">$0.00</p>
+                        </div>
+                        <div class="p-4 bg-red-100 rounded-lg">
+                            <p class="text-sm text-red-800">Total Budgeted</p>
+                            <p id="summaryTotalBudgeted" class="text-2xl font-bold text-red-600">$0.00</p>
+                        </div>
+                        <div class="p-4 rounded-lg bg-blue-100">
+                            <p class="text-sm text-blue-800">Remaining</p>
+                            <p id="summaryBudgetRemaining" class="text-2xl font-bold text-blue-600">$0.00</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-4">Set Budgets</h2>
+                     <form id="budgetForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="hidden" id="budgetId">
+                        <select id="budgetCategory" class="p-2 border rounded-md"></select>
+                        <select id="budgetSubcategory" class="p-2 border rounded-md"></select>
+                        <input type="number" step="0.01" id="budgetAmount" placeholder="Budgeted Amount" class="p-2 border rounded-md" required>
+                        <select id="budgetPaymentMethod" class="p-2 border rounded-md"></select>
+                        <button type="submit" class="md:col-span-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Set/Update Budget</button>
+                    </form>
+                    <div class="mt-6">
+                        <h3 class="text-xl font-semibold mb-2">Current Budgets</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white">
+                                <thead class="bg-gray-200">
+                                    <tr>
+                                        <th class="py-2 px-4 text-left">Category</th>
+                                        <th class="py-2 px-4 text-left">Subcategory</th>
+                                        <th class="py-2 px-4 text-left">Payment Method</th>
+                                        <th class="py-2 px-4 text-right">Amount</th>
+                                        <th class="py-2 px-4 text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="budgetList"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports View -->
+            <div id="reportsView" class="view hidden">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-4">Monthly Reports</h2>
+                    <div class="mb-4">
+                        <label for="reportMonth" class="mr-2">Select Month:</label>
+                        <input type="month" id="reportMonth" class="p-2 border rounded-md">
+                    </div>
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2 border-b pb-2">Monthly Overview</h3>
+                            <div id="incomeExpenseReport"></div>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2 border-b pb-2">Budget vs. Actual</h3>
+                            <div id="budgetActualReport" class="overflow-x-auto"></div>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold mt-4 mb-2 border-b pb-2">Spend by Category</h3>
+                            <div id="categorySpendReport"></div>
+                        </div>
+                        <div>
+                           <h3 class="text-xl font-semibold mt-4 mb-2 border-b pb-2">Spend by Payment Type</h3>
+                           <div id="paymentTypeSpendReport"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="settingsView" class="view hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Payment Methods -->
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold mb-4">Payment Methods</h3>
+                        <form id="paymentMethodForm">
+                            <input type="hidden" id="paymentMethodId">
+                            <input type="text" id="paymentMethodName" placeholder="Name (e.g., Chase Sapphire)" class="p-2 border rounded-md w-full mb-2" required>
+                            <select id="paymentMethodType" class="p-2 border rounded-md w-full mb-2">
+                                <option value="Credit Card">Credit Card</option>
+                                <option value="Bank Account">Bank Account</option>
+                            </select>
+                            <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Add/Update Method</button>
+                        </form>
+                        <ul id="paymentMethodList" class="mt-4"></ul>
+                    </div>
+                    <!-- Expense Categories -->
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold mb-4">Expense Categories</h3>
+                        <form id="categoryForm">
+                             <input type="text" id="categoryName" placeholder="Main Category Name" class="p-2 border rounded-md w-full mb-2" required>
+                            <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Add Category</button>
+                        </form>
+                        <div id="categoryList" class="mt-4"></div>
+                    </div>
+                    <!-- People & Birthdays -->
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold mb-4">People & Birthdays</h3>
+                        <form id="personForm">
+                            <input type="hidden" id="personId">
+                            <input type="text" id="personName" placeholder="Person's Name" class="p-2 border rounded-md w-full mb-2" required>
+                            <input type="date" id="personBirthday" class="p-2 border rounded-md w-full mb-2" required>
+                            <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Add/Update Person</button>
+                        </form>
+                        <ul id="peopleList" class="mt-4"></ul>
+                    </div>
+                    <!-- Data Management -->
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold mb-4">Data Management</h3>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <button id="exportButton" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-300">Export Data</button>
+                            <label class="flex-1 px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition duration-300 cursor-pointer text-center">
+                                Import Data
+                                <input type="file" id="importFile" class="hidden" accept=".json">
+                            </label>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-2">Note: Importing data will overwrite all existing data in the application.</p>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
 
-    <!-- Modals -->
-    <div id="items-modal" class="modal-overlay">
-        <div class="modal-content" style="width: 600px;">
-            <div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-semibold">Manage Grocery Items</h2><button id="close-items-modal-btn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button></div>
-            <div class="flex gap-2 mb-4"><input type="text" id="new-item-input" placeholder="New item name" class="flex-grow p-3 border rounded-lg"><input type="text" id="new-item-category-input" placeholder="Category" class="flex-grow p-3 border rounded-lg"><button id="add-item-btn" class="bg-green-600 text-white px-4 rounded-lg hover:bg-green-700 font-semibold">+</button></div>
-            <div id="grocery-items-container" class="space-y-2 max-h-96 overflow-y-auto pr-2"></div>
-        </div>
+    <!-- Notification Toast -->
+    <div id="notification" class="fixed bottom-5 right-5 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <p id="notificationMessage"></p>
     </div>
-    <div id="reports-modal" class="modal-overlay">
-        <div class="modal-content"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-semibold">Monthly Spending Report</h2><button id="close-reports-modal-btn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button></div><div id="reports-content"></div></div>
-    </div>
-    <div id="planner-recipes-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="flex justify-between items-center mb-4"><h2 class="text-3xl font-bold">Meal Planner & Recipes</h2><button id="close-planner-modal-btn" class="text-gray-500 hover:text-gray-800 text-3xl">&times;</button></div>
-            <div class="border-b border-gray-200 mb-4">
-                <nav class="-mb-px flex space-x-4" id="planner-tabs">
-                    <button data-tab="planner" class="tab-button active whitespace-nowrap py-3 px-1 border-b-2 font-medium text-lg">Meal Planner</button>
-                    <button data-tab="recipes" class="tab-button whitespace-nowrap py-3 px-1 border-b-2 font-medium text-lg">Recipe Book</button>
-                </nav>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+            <h3 id="modalTitle" class="text-xl font-bold mb-4">Confirm Action</h3>
+            <p id="modalMessage" class="mb-6">Are you sure you want to proceed? This action cannot be undone.</p>
+            <div class="flex justify-end gap-4">
+                <button id="modalCancel" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">Cancel</button>
+                <button id="modalConfirm" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Confirm</button>
             </div>
-            <div id="planner-content" class="tab-content active"></div>
-            <div id="recipes-content" class="tab-content"></div>
-        </div>
-    </div>
-    <div id="add-meal-item-modal" class="modal-overlay">
-        <div class="modal-content" style="width: 500px;">
-            <div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-semibold" id="add-meal-item-modal-title">Add to Meal</h2><button id="close-add-meal-item-modal-btn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button></div>
-            <div id="meal-item-selection-container" class="max-h-96 overflow-y-auto p-2 border rounded-lg"></div>
-            <button id="save-meal-items-btn" class="w-full bg-green-600 text-white py-2 rounded-lg mt-4">Add Selected</button>
         </div>
     </div>
 
-    <div id="toast"></div>
+    <!-- Itemization Modal -->
+    <div id="itemizationModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl mx-4">
+            <h3 id="itemizationModalTitle" class="text-xl font-bold mb-2">Itemize Expense</h3>
+            <div class="grid grid-cols-2 gap-4 mb-4 text-center">
+                <div class="p-2 bg-gray-100 rounded">
+                    <p class="text-sm">Total Amount</p>
+                    <p id="itemizationTotal" class="font-bold text-lg">$0.00</p>
+                </div>
+                <div class="p-2 bg-gray-100 rounded">
+                    <p class="text-sm">Remaining</p>
+                    <p id="itemizationRemaining" class="font-bold text-lg">$0.00</p>
+                </div>
+            </div>
+            <form id="itemizationForm" class="flex gap-2 mb-4">
+                <input type="hidden" id="itemizationExpenseId">
+                <input type="text" id="itemName" placeholder="Item Name" class="flex-grow p-2 border rounded-md" required>
+                <input type="number" step="0.01" id="itemAmount" placeholder="Amount" class="w-32 p-2 border rounded-md" required>
+                <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Add</button>
+            </form>
+            <div class="max-h-64 overflow-y-auto border rounded-md">
+                <ul id="itemizedList" class="divide-y">
+                    <!-- Items will be listed here -->
+                </ul>
+            </div>
+            <div class="flex justify-end gap-4 mt-6">
+                <button id="itemizationDone" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Done</button>
+            </div>
+        </div>
+    </div>
+
 
     <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            // --- INDEXEDDB SETUP ---
-            const DB_NAME = 'GroceryAppDB';
-            const DB_VERSION = 3;
-            let db;
+        // --- DATABASE SETUP ---
+        const DB_NAME = 'HomeBudgetDB';
+        const DB_VERSION = 1;
+        let db;
+        let calendarDate = new Date();
 
-            function openDB() {
-                return new Promise((resolve, reject) => {
-                    const request = indexedDB.open(DB_NAME, DB_VERSION);
-                    request.onerror = (event) => reject("Error opening DB: " + event.target.errorCode);
-                    request.onsuccess = (event) => { db = event.target.result; resolve(db); };
-                    request.onupgradeneeded = (event) => {
-                        const db = event.target.result;
-                        if (!db.objectStoreNames.contains('groceryItems')) db.createObjectStore('groceryItems', { keyPath: 'id' });
-                        if (!db.objectStoreNames.contains('currentShoppingList')) db.createObjectStore('currentShoppingList', { keyPath: 'id' });
-                        if (!db.objectStoreNames.contains('pastShoppingLists')) db.createObjectStore('pastShoppingLists', { keyPath: 'id', autoIncrement: true });
-                        if (!db.objectStoreNames.contains('recipes')) db.createObjectStore('recipes', { keyPath: 'id', autoIncrement: true });
-                        if (!db.objectStoreNames.contains('mealPlan')) db.createObjectStore('mealPlan', { keyPath: 'id' });
+        function initDb() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+                request.onerror = (event) => {
+                    console.error('Database error:', event.target.errorCode);
+                    reject('Database error');
+                };
+
+                request.onupgradeneeded = (event) => {
+                    db = event.target.result;
+                    if (!db.objectStoreNames.contains('income')) {
+                        db.createObjectStore('income', { keyPath: 'id', autoIncrement: true });
+                    }
+                    if (!db.objectStoreNames.contains('expenses')) {
+                        const expenseStore = db.createObjectStore('expenses', { keyPath: 'id', autoIncrement: true });
+                        expenseStore.createIndex('date', 'date', { unique: false });
+                    }
+                    if (!db.objectStoreNames.contains('subscriptions')) {
+                        db.createObjectStore('subscriptions', { keyPath: 'id', autoIncrement: true });
+                    }
+                    if (!db.objectStoreNames.contains('budgets')) {
+                         db.createObjectStore('budgets', { keyPath: 'id', autoIncrement: true });
+                    }
+                    if (!db.objectStoreNames.contains('paymentMethods')) {
+                        db.createObjectStore('paymentMethods', { keyPath: 'id', autoIncrement: true });
+                    }
+                    if (!db.objectStoreNames.contains('categories')) {
+                        db.createObjectStore('categories', { keyPath: 'id', autoIncrement: true });
+                    }
+                     if (!db.objectStoreNames.contains('people')) {
+                        db.createObjectStore('people', { keyPath: 'id', autoIncrement: true });
+                    }
+                };
+
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    console.log('Database initialized successfully.');
+                    resolve(db);
+                };
+            });
+        }
+
+        // --- GENERIC DB OPERATIONS ---
+        function addObject(storeName, object) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readwrite');
+                const store = transaction.objectStore(storeName);
+                const request = store.add(object);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = (event) => reject('Error adding object:', event.target.error);
+            });
+        }
+        
+        function getObject(storeName, id) {
+             return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readonly');
+                const store = transaction.objectStore(storeName);
+                const request = store.get(id);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = (event) => reject('Error getting object:', event.target.error);
+            });
+        }
+
+        function getAllObjects(storeName) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readonly');
+                const store = transaction.objectStore(storeName);
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = (event) => reject('Error getting objects:', event.target.error);
+            });
+        }
+
+        function updateObject(storeName, object) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readwrite');
+                const store = transaction.objectStore(storeName);
+                const request = store.put(object);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = (event) => reject('Error updating object:', event.target.error);
+            });
+        }
+
+        function deleteObject(storeName, id) {
+             return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readwrite');
+                const store = transaction.objectStore(storeName);
+                const request = store.delete(id);
+                request.onsuccess = () => resolve();
+                request.onerror = (event) => reject('Error deleting object:', event.target.error);
+            });
+        }
+
+
+        // --- UI LOGIC ---
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(view => {
+                view.classList.add('hidden');
+            });
+            document.getElementById(viewId).classList.remove('hidden');
+        }
+
+        // --- APP INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await initDb();
+                
+                await reloadAllData();
+
+                // Set up forms
+                setupForms();
+
+                // Set up reports
+                document.getElementById('reportMonth').addEventListener('change', generateReports);
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = (today.getMonth() + 1).toString().padStart(2, '0');
+                document.getElementById('reportMonth').value = `${year}-${month}`;
+                generateReports();
+
+                // Setup Data Management buttons
+                document.getElementById('exportButton').addEventListener('click', exportData);
+                document.getElementById('importFile').addEventListener('change', importData);
+                
+                // Setup Calendar
+                setupCalendarNav();
+                renderExpenseCalendar(calendarDate.getFullYear(), calendarDate.getMonth());
+
+
+            } catch (error) {
+                console.error("Initialization failed:", error);
+                showNotification("App failed to initialize. Check console.", true);
+            }
+        });
+        
+        async function reloadAllData() {
+            await loadIncome();
+            await loadExpenses();
+            await loadSubscriptions();
+            await loadBudgets();
+            await loadPaymentMethods();
+            await loadCategories();
+            await loadPeople();
+            await updateDashboard();
+            await generateReports();
+            await renderExpenseCalendar(calendarDate.getFullYear(), calendarDate.getMonth());
+            await updateBudgetSummary();
+        }
+
+        function setupForms() {
+            // Income Form
+            document.getElementById('incomeType').addEventListener('change', (e) => {
+                const dateField = document.getElementById('incomeDate');
+                if (e.target.value === 'one-time') {
+                    dateField.classList.remove('hidden');
+                    dateField.required = true;
+                } else {
+                    dateField.classList.add('hidden');
+                    dateField.required = false;
+                }
+            });
+
+            document.getElementById('incomeForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const incomeData = {
+                    name: document.getElementById('incomeName').value,
+                    source: document.getElementById('incomeSource').value,
+                    type: document.getElementById('incomeType').value,
+                    amount: parseFloat(document.getElementById('incomeAmount').value),
+                    date: document.getElementById('incomeType').value === 'one-time' ? document.getElementById('incomeDate').value : null
+                };
+                const id = document.getElementById('incomeId').value;
+                if (id) {
+                    incomeData.id = parseInt(id);
+                    await updateObject('income', incomeData);
+                } else {
+                    await addObject('income', incomeData);
+                }
+                e.target.reset();
+                document.getElementById('incomeId').value = '';
+                document.getElementById('incomeDate').classList.add('hidden');
+                loadIncome();
+                updateDashboard();
+            });
+
+            // Expense Form
+            document.getElementById('expenseForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const expenseData = {
+                    payee: document.getElementById('expensePayee').value,
+                    category: document.getElementById('expenseCategory').value,
+                    subcategory: document.getElementById('expenseSubcategory').value,
+                    paymentType: document.getElementById('expensePaymentType').value,
+                    amount: parseFloat(document.getElementById('expenseAmount').value),
+                    date: document.getElementById('expenseDate').value,
+                    items: [] 
+                };
+                 const id = document.getElementById('expenseId').value;
+                if (id) {
+                    expenseData.id = parseInt(id);
+                    const existingExpense = await getObject('expenses', expenseData.id);
+                    expenseData.items = existingExpense.items || []; 
+                    await updateObject('expenses', expenseData);
+                } else {
+                    await addObject('expenses', expenseData);
+                }
+                e.target.reset();
+                document.getElementById('expenseId').value = '';
+                loadExpenses();
+                updateDashboard();
+            });
+            
+            // Subscription Form
+            document.getElementById('subscriptionForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const subscriptionData = {
+                    name: document.getElementById('subscriptionName').value,
+                    amount: parseFloat(document.getElementById('subscriptionAmount').value),
+                    startDate: document.getElementById('subscriptionStartDate').value,
+                    paymentMethod: document.getElementById('subscriptionPaymentMethod').value,
+                    status: 'active'
+                };
+                const id = document.getElementById('subscriptionId').value;
+                if (id) {
+                    subscriptionData.id = parseInt(id);
+                    await updateObject('subscriptions', subscriptionData);
+                } else {
+                    await addObject('subscriptions', subscriptionData);
+                }
+                e.target.reset();
+                document.getElementById('subscriptionId').value = '';
+                loadSubscriptions();
+            });
+
+            // Budget Form
+            document.getElementById('budgetForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const budgetData = {
+                    category: document.getElementById('budgetCategory').value,
+                    subcategory: document.getElementById('budgetSubcategory').value,
+                    amount: parseFloat(document.getElementById('budgetAmount').value),
+                    paymentMethod: document.getElementById('budgetPaymentMethod').value
+                };
+                const id = document.getElementById('budgetId').value;
+                if(id){
+                    budgetData.id = parseInt(id);
+                    await updateObject('budgets', budgetData);
+                } else {
+                    await addObject('budgets', budgetData);
+                }
+                e.target.reset();
+                document.getElementById('budgetId').value = '';
+                loadBudgets();
+            });
+
+            // Payment Method Form
+            document.getElementById('paymentMethodForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const paymentMethodData = {
+                    name: document.getElementById('paymentMethodName').value,
+                    type: document.getElementById('paymentMethodType').value
+                };
+                const id = document.getElementById('paymentMethodId').value;
+                if (id) {
+                    paymentMethodData.id = parseInt(id);
+                    await updateObject('paymentMethods', paymentMethodData);
+                } else {
+                    await addObject('paymentMethods', paymentMethodData);
+                }
+                e.target.reset();
+                document.getElementById('paymentMethodId').value = '';
+                loadPaymentMethods();
+            });
+
+            // Category Form
+            document.getElementById('categoryForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const categoryName = document.getElementById('categoryName').value;
+                await addObject('categories', { name: categoryName, subcategories: [] });
+                e.target.reset();
+                loadCategories();
+            });
+            
+            // Person Form
+            document.getElementById('personForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const personData = {
+                    name: document.getElementById('personName').value,
+                    birthday: document.getElementById('personBirthday').value
+                };
+                const id = document.getElementById('personId').value;
+                if (id) {
+                    personData.id = parseInt(id);
+                    await updateObject('people', personData);
+                } else {
+                    await addObject('people', personData);
+                }
+                e.target.reset();
+                document.getElementById('personId').value = '';
+                loadPeople();
+                updateDashboard();
+            });
+        }
+        
+        async function loadIncome() {
+            const incomes = await getAllObjects('income');
+            const list = document.getElementById('incomeList');
+            list.innerHTML = '';
+            incomes.forEach(income => {
+                const row = list.insertRow();
+                row.innerHTML = `
+                    <td class="border px-4 py-2">${income.name}</td>
+                    <td class="border px-4 py-2">${income.source}</td>
+                    <td class="border px-4 py-2">${income.type}</td>
+                    <td class="border px-4 py-2 text-right">$${income.amount.toFixed(2)}</td>
+                    <td class="border px-4 py-2">${income.date || 'N/A'}</td>
+                    <td class="border px-4 py-2 text-center">
+                        <button onclick="editIncome(${income.id})" class="text-blue-500 hover:underline">Edit</button>
+                        <button onclick="deleteIncome(${income.id})" class="text-red-500 hover:underline ml-2">Delete</button>
+                    </td>
+                `;
+            });
+            await updateBudgetSummary();
+        }
+
+        async function editIncome(id) {
+            const transaction = db.transaction(['income'], 'readonly');
+            const store = transaction.objectStore('income');
+            const request = store.get(id);
+            request.onsuccess = () => {
+                const income = request.result;
+                document.getElementById('incomeId').value = income.id;
+                document.getElementById('incomeName').value = income.name;
+                document.getElementById('incomeSource').value = income.source;
+                document.getElementById('incomeType').value = income.type;
+                document.getElementById('incomeAmount').value = income.amount;
+
+                const dateField = document.getElementById('incomeDate');
+                if (income.type === 'one-time') {
+                    dateField.classList.remove('hidden');
+                    dateField.required = true;
+                    dateField.value = income.date;
+                } else {
+                    dateField.classList.add('hidden');
+                    dateField.required = false;
+                    dateField.value = '';
+                }
+            };
+        }
+
+        async function deleteIncome(id) {
+            showConfirmation('Delete Income', 'Are you sure you want to delete this income source?', async () => {
+                await deleteObject('income', id);
+                loadIncome();
+                updateDashboard();
+                showNotification('Income source deleted.');
+            });
+        }
+        
+        async function loadExpenses() {
+            const expenses = await getAllObjects('expenses');
+            const list = document.getElementById('expenseList');
+            list.innerHTML = '';
+            expenses.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(expense => {
+                const row = list.insertRow();
+                
+                const hasItems = expense.items && expense.items.length > 0;
+                const itemizeButtonText = hasItems ? 'View Items' : 'Itemize';
+                const itemizeButtonClass = hasItems ? 'text-green-500' : 'text-blue-500';
+
+                let actionsHTML = `
+                    <button onclick="openItemizationModal(${expense.id})" class="${itemizeButtonClass} hover:underline">${itemizeButtonText}</button>
+                    <button onclick="editExpense(${expense.id})" class="text-blue-500 hover:underline ml-2">Edit</button>
+                    <button onclick="deleteExpense(${expense.id})" class="text-red-500 hover:underline ml-2">Delete</button>
+                `;
+                
+                row.innerHTML = `
+                    <td class="border px-4 py-2">${expense.payee}</td>
+                    <td class="border px-4 py-2">${expense.category} / ${expense.subcategory}</td>
+                    <td class="border px-4 py-2">${expense.paymentType}</td>
+                    <td class="border px-4 py-2 text-right">$${expense.amount.toFixed(2)}</td>
+                    <td class="border px-4 py-2">${expense.date}</td>
+                    <td class="border px-4 py-2 text-center">${actionsHTML}</td>
+                `;
+            });
+            await renderExpenseCalendar(calendarDate.getFullYear(), calendarDate.getMonth());
+        }
+
+        async function editExpense(id) {
+            const transaction = db.transaction(['expenses'], 'readonly');
+            const store = transaction.objectStore('expenses');
+            const request = store.get(id);
+            request.onsuccess = () => {
+                const expense = request.result;
+                document.getElementById('expenseId').value = expense.id;
+                document.getElementById('expensePayee').value = expense.payee;
+                document.getElementById('expenseCategory').value = expense.category;
+                handleCategoryChangeForEdit(expense.category, expense.subcategory);
+                document.getElementById('expensePaymentType').value = expense.paymentType;
+                document.getElementById('expenseAmount').value = expense.amount;
+                document.getElementById('expenseDate').value = expense.date;
+            };
+        }
+
+        async function deleteExpense(id) {
+            showConfirmation('Delete Expense', 'Are you sure you want to delete this expense?', async () => {
+                await deleteObject('expenses', id);
+                loadExpenses();
+                updateDashboard();
+                showNotification('Expense deleted.');
+            });
+        }
+
+        async function loadSubscriptions() {
+            const subscriptions = await getAllObjects('subscriptions');
+            const list = document.getElementById('subscriptionList');
+            list.innerHTML = '';
+            
+            const activeSubscriptions = subscriptions.filter(s => s.status === 'active');
+            const totalCost = activeSubscriptions.reduce((sum, s) => sum + s.amount, 0);
+            document.getElementById('totalSubscriptionCost').textContent = `$${totalCost.toFixed(2)}`;
+
+            subscriptions.forEach(sub => {
+                const row = list.insertRow();
+                row.innerHTML = `
+                    <td class="border px-4 py-2">${sub.name}</td>
+                    <td class="border px-4 py-2 text-right">$${sub.amount.toFixed(2)}</td>
+                    <td class="border px-4 py-2">${sub.startDate}</td>
+                    <td class="border px-4 py-2">${sub.paymentMethod || 'N/A'}</td>
+                    <td class="border px-4 py-2">${sub.status}</td>
+                    <td class="border px-4 py-2 text-center">
+                         <button onclick="toggleSubscriptionStatus(${sub.id}, '${sub.status}')" class="text-yellow-500 hover:underline">${sub.status === 'active' ? 'Cancel' : 'Reactivate'}</button>
+                        <button onclick="editSubscription(${sub.id})" class="text-blue-500 hover:underline ml-2">Edit</button>
+                        <button onclick="deleteSubscription(${sub.id})" class="text-red-500 hover:underline ml-2">Delete</button>
+                    </td>
+                `;
+            });
+            await renderExpenseCalendar(calendarDate.getFullYear(), calendarDate.getMonth());
+            await updateBudgetSummary();
+        }
+        
+        async function editSubscription(id) {
+             const transaction = db.transaction(['subscriptions'], 'readonly');
+            const store = transaction.objectStore('subscriptions');
+            const request = store.get(id);
+            request.onsuccess = () => {
+                const sub = request.result;
+                document.getElementById('subscriptionId').value = sub.id;
+                document.getElementById('subscriptionName').value = sub.name;
+                document.getElementById('subscriptionAmount').value = sub.amount;
+                document.getElementById('subscriptionStartDate').value = sub.startDate;
+                document.getElementById('subscriptionPaymentMethod').value = sub.paymentMethod;
+            };
+        }
+        
+        async function deleteSubscription(id) {
+            showConfirmation('Delete Subscription', 'Are you sure?', async () => {
+                await deleteObject('subscriptions', id);
+                loadSubscriptions();
+                showNotification('Subscription deleted.');
+            });
+        }
+        
+        async function toggleSubscriptionStatus(id, currentStatus) {
+            const newStatus = currentStatus === 'active' ? 'cancelled' : 'active';
+            const transaction = db.transaction(['subscriptions'], 'readwrite');
+            const store = transaction.objectStore('subscriptions');
+            const request = store.get(id);
+            request.onsuccess = () => {
+                const sub = request.result;
+                sub.status = newStatus;
+                store.put(sub);
+                loadSubscriptions();
+                showNotification(`Subscription status changed to ${newStatus}.`);
+            };
+        }
+
+        async function loadBudgets() {
+            const budgets = await getAllObjects('budgets');
+            const subscriptions = await getAllObjects('subscriptions');
+            const list = document.getElementById('budgetList');
+            list.innerHTML = '';
+
+            // Render user-defined budgets
+            budgets.forEach(budget => {
+                const row = list.insertRow();
+                row.innerHTML = `
+                    <td class="border px-4 py-2">${budget.category}</td>
+                    <td class="border px-4 py-2">${budget.subcategory}</td>
+                    <td class="border px-4 py-2">${budget.paymentMethod || 'Any'}</td>
+                    <td class="border px-4 py-2 text-right">$${budget.amount.toFixed(2)}</td>
+                    <td class="border px-4 py-2 text-center">
+                        <button onclick="editBudget(${budget.id})" class="text-blue-500 hover:underline">Edit</button>
+                        <button onclick="deleteBudget(${budget.id})" class="text-red-500 hover:underline ml-2">Delete</button>
+                    </td>
+                `;
+            });
+
+            // Render subscriptions as a line item
+            const activeSubscriptions = subscriptions.filter(s => s.status === 'active');
+            const totalSubscriptionCost = activeSubscriptions.reduce((sum, s) => sum + s.amount, 0);
+
+            if (totalSubscriptionCost > 0) {
+                const row = list.insertRow();
+                row.className = 'bg-blue-50'; // Add a distinct style
+                row.innerHTML = `
+                    <td class="border px-4 py-2 font-semibold">Subscriptions</td>
+                    <td class="border px-4 py-2">Recurring</td>
+                    <td class="border px-4 py-2">Various</td>
+                    <td class="border px-4 py-2 text-right">$${totalSubscriptionCost.toFixed(2)}</td>
+                    <td class="border px-4 py-2 text-center text-sm text-gray-500">Auto</td>
+                `;
+            }
+            await updateBudgetSummary();
+        }
+        
+        async function editBudget(id) {
+            const transaction = db.transaction(['budgets'], 'readonly');
+            const store = transaction.objectStore('budgets');
+            const request = store.get(id);
+            request.onsuccess = () => {
+                const budget = request.result;
+                document.getElementById('budgetId').value = budget.id;
+                document.getElementById('budgetCategory').value = budget.category;
+                handleCategoryChangeForEdit(budget.category, budget.subcategory, 'budgetSubcategory');
+                document.getElementById('budgetAmount').value = budget.amount;
+                document.getElementById('budgetPaymentMethod').value = budget.paymentMethod;
+            };
+        }
+
+        async function deleteBudget(id) {
+            showConfirmation('Delete Budget', 'Are you sure?', async () => {
+                await deleteObject('budgets', id);
+                loadBudgets();
+                showNotification('Budget deleted.');
+            });
+        }
+        
+        async function loadPaymentMethods() {
+            const methods = await getAllObjects('paymentMethods');
+            const list = document.getElementById('paymentMethodList');
+            const selects = [
+                document.getElementById('expensePaymentType'),
+                document.getElementById('budgetPaymentMethod'),
+                document.getElementById('subscriptionPaymentMethod')
+            ];
+            list.innerHTML = '';
+            
+            selects.forEach(select => {
+                select.innerHTML = '<option value="">Select Method</option>';
+            });
+
+            methods.forEach(method => {
+                const li = document.createElement('li');
+                li.className = 'flex justify-between items-center p-2 border-b';
+                li.innerHTML = `
+                    <span>${method.name} (${method.type})</span>
+                    <div>
+                        <button onclick="editPaymentMethod(${method.id})" class="text-blue-500 hover:underline">Edit</button>
+                        <button onclick="deletePaymentMethod(${method.id})" class="text-red-500 hover:underline ml-2">Delete</button>
+                    </div>
+                `;
+                list.appendChild(li);
+
+                const option = document.createElement('option');
+                option.value = method.name;
+                option.textContent = method.name;
+                selects.forEach(select => select.appendChild(option.cloneNode(true)));
+            });
+        }
+
+        async function editPaymentMethod(id) {
+            const transaction = db.transaction(['paymentMethods'], 'readonly');
+            const store = transaction.objectStore('paymentMethods');
+            const request = store.get(id);
+            request.onsuccess = () => {
+                const method = request.result;
+                document.getElementById('paymentMethodId').value = method.id;
+                document.getElementById('paymentMethodName').value = method.name;
+                document.getElementById('paymentMethodType').value = method.type;
+            };
+        }
+
+        async function deletePaymentMethod(id) {
+            showConfirmation('Delete Payment Method', 'Are you sure?', async () => {
+                await deleteObject('paymentMethods', id);
+                loadPaymentMethods();
+                showNotification('Payment method deleted.');
+            });
+        }
+
+        async function loadCategories() {
+            const categories = await getAllObjects('categories');
+            const list = document.getElementById('categoryList');
+            const expenseCategorySelect = document.getElementById('expenseCategory');
+            const budgetCategorySelect = document.getElementById('budgetCategory');
+            
+            list.innerHTML = '';
+            expenseCategorySelect.innerHTML = '<option value="">Select Category</option>';
+            budgetCategorySelect.innerHTML = '<option value="">Select Category</option>';
+
+            categories.forEach(cat => {
+                const div = document.createElement('div');
+                div.className = 'p-2 border-b';
+                div.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="font-semibold">${cat.name}</span>
+                        <button onclick="deleteCategory(${cat.id})" class="text-red-500 hover:underline">Delete</button>
+                    </div>
+                    <form class="subcategoryForm mt-2" data-category-id="${cat.id}">
+                        <input type="text" placeholder="New Subcategory" class="p-1 border rounded-md text-sm" required>
+                        <button type="submit" class="px-2 py-1 bg-green-500 text-white rounded-md text-sm">Add</button>
+                    </form>
+                    <ul class="ml-4 mt-2">
+                        ${cat.subcategories.map(sub => `<li>- ${sub} <button onclick="deleteSubcategory(${cat.id}, '${sub}')" class="text-red-500 text-xs">x</button></li>`).join('')}
+                    </ul>
+                `;
+                list.appendChild(div);
+
+                const option = document.createElement('option');
+                option.value = cat.name;
+                option.textContent = cat.name;
+                expenseCategorySelect.appendChild(option.cloneNode(true));
+                budgetCategorySelect.appendChild(option.cloneNode(true));
+            });
+
+            document.querySelectorAll('.subcategoryForm').forEach(form => {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const categoryId = parseInt(e.target.dataset.categoryId);
+                    const subcategoryName = e.target.querySelector('input').value;
+                    
+                    const transaction = db.transaction(['categories'], 'readwrite');
+                    const store = transaction.objectStore('categories');
+                    const request = store.get(categoryId);
+                    request.onsuccess = () => {
+                        const category = request.result;
+                        if (category && !category.subcategories.includes(subcategoryName)) {
+                            category.subcategories.push(subcategoryName);
+                            store.put(category);
+                            e.target.querySelector('input').value = '';
+                            loadCategories();
+                        }
                     };
                 });
-            }
+            });
+        }
+        
+        async function deleteCategory(id) {
+            showConfirmation('Delete Category', 'This will delete the category and all its subcategories. Are you sure?', async () => {
+                await deleteObject('categories', id);
+                loadCategories();
+                showNotification('Category deleted.');
+            });
+        }
 
-            function dbTransaction(storeName, mode, action) {
-                return new Promise((resolve, reject) => {
-                    if (!db) { reject("DB not initialized"); return; }
-                    const transaction = db.transaction(storeName, mode);
-                    const store = transaction.objectStore(storeName);
-                    const request = action(store);
-                    transaction.oncomplete = () => resolve(request.result);
-                    transaction.onerror = (event) => reject(event.target.error);
-                });
-            }
-
-            // --- DATA STATE ---
-            let groceryItems = [], currentShoppingList = [], pastShoppingLists = [], recipes = [], mealPlan = {};
-            let currentMealTarget = { day: null, meal: null };
-
-            // --- DOM ELEMENTS ---
-            const shoppingListContainer = document.getElementById('shopping-list-container');
-            const pastListsContainer = document.getElementById('past-lists-container');
-            const totalPriceEl = document.getElementById('total-price');
-            const toastEl = document.getElementById('toast');
-            const emptyListMessage = document.getElementById('empty-list-message');
-            const emptyHistoryMessage = document.getElementById('empty-history-message');
-            const clearListBtn = document.getElementById('clear-list-btn');
-            const finishShoppingBtn = document.getElementById('finish-shopping-btn');
-            const exportDataBtn = document.getElementById('export-data-btn');
-            const importDataBtn = document.getElementById('import-data-btn');
-            const importFileInput = document.getElementById('import-file-input');
-            const hamburgerBtn = document.getElementById('hamburger-btn');
-            const mainNav = document.getElementById('main-nav');
-            
-            // --- UTILITY FUNCTIONS ---
-            const showToast = (message, type = 'success') => {
-                toastEl.textContent = message;
-                toastEl.className = type === 'success' ? 'toast-success' : 'toast-error';
-                toastEl.classList.add('show');
-                setTimeout(() => toastEl.classList.remove('show'), 3000);
-            };
-            const capitalize = s => s && s.charAt(0).toUpperCase() + s.slice(1);
-
-            // --- DATA LOADING ---
-            async function loadDataFromDB() {
-                groceryItems = await dbTransaction('groceryItems', 'readonly', store => store.getAll()) || [];
-                currentShoppingList = await dbTransaction('currentShoppingList', 'readonly', store => store.getAll()) || [];
-                pastShoppingLists = await dbTransaction('pastShoppingLists', 'readonly', store => store.getAll()) || [];
-                recipes = await dbTransaction('recipes', 'readonly', store => store.getAll()) || [];
-                const plan = await dbTransaction('mealPlan', 'readonly', store => store.get('currentWeek'));
-                mealPlan = plan ? plan.days : {};
-
-                if (groceryItems.length === 0) {
-                    const defaultItems = [ { id: Date.now() + 1, name: 'Apples', category: 'Produce', priceHistory: [] }, { id: Date.now() + 2, name: 'Milk', category: 'Dairy', priceHistory: [] }, { id: Date.now() + 3, name: 'Bread', category: 'Bakery', priceHistory: [] } ];
-                    for (const item of defaultItems) await dbTransaction('groceryItems', 'readwrite', store => store.put(item));
-                    groceryItems = defaultItems;
-                }
-            }
-
-            // --- RENDER FUNCTIONS ---
-            const renderAll = () => {
-                renderShoppingList();
-                renderPastLists();
-                renderGroceryItemsManager();
-                renderRecipeBook();
-                renderMealPlanner();
-            };
-
-            const renderShoppingList = () => {
-                shoppingListContainer.innerHTML = '';
-                emptyListMessage.classList.toggle('hidden', currentShoppingList.length > 0);
-                if (currentShoppingList.length > 0) {
-                    currentShoppingList.sort((a,b) => a.name.localeCompare(b.name)).forEach(item => {
-                        const itemEl = document.createElement('div');
-                        itemEl.className = `p-2 rounded-lg ${item.purchased ? 'bg-gray-100' : ''}`;
-                        itemEl.innerHTML = `<div class="flex items-center gap-3"><input type="checkbox" data-id="${item.id}" class="toggle-purchased-cb h-5 w-5" ${item.purchased ? 'checked' : ''}><span class="flex-grow font-semibold ${item.purchased ? 'checked-item' : ''}">${item.name}</span><div class="flex items-center"><span class="text-gray-500 mr-1">$</span><input type="number" data-id="${item.id}" value="${item.price || ''}" placeholder="0.00" class="price-input w-20 text-right p-1 border rounded-md"></div><button data-id="${item.id}" class="remove-from-list-btn text-red-500 hover:text-red-700 p-1 text-xl">&times;</button></div><div class="flex items-center gap-2 pl-8 mt-1"><label class="text-sm">Qty:</label><input type="number" data-id="${item.id}" value="${item.quantity || 1}" class="quantity-input w-16 p-1 border rounded-md"><label class="text-sm">Unit:</label><input type="text" data-id="${item.id}" value="${item.unit || ''}" placeholder="e.g., lbs, oz" class="unit-input flex-grow p-1 border rounded-md"></div>`;
-                        shoppingListContainer.appendChild(itemEl);
-                    });
-                } else {
-                    shoppingListContainer.appendChild(emptyListMessage);
-                }
-                calculateTotal();
-            };
-
-            const renderPastLists = () => {
-                pastListsContainer.innerHTML = '';
-                emptyHistoryMessage.classList.toggle('hidden', pastShoppingLists.length > 0);
-                if (pastShoppingLists.length > 0) {
-                    pastShoppingLists.sort((a,b) => b.id - a.id).forEach(list => {
-                        const listEl = document.createElement('div');
-                        listEl.className = 'bg-gray-100 p-4 rounded-lg';
-                        const total = list.items.reduce((acc, item) => acc + (parseFloat(item.price) || 0), 0);
-                        listEl.innerHTML = `<div class="flex justify-between items-center font-semibold"><h3>List from ${list.date}</h3><div class="flex items-center gap-2"><span>Total: $${total.toFixed(2)}</span><button data-id="${list.id}" class="edit-past-list-btn text-blue-500 hover:text-blue-700 p-1">Edit</button></div></div>`;
-                        pastListsContainer.appendChild(listEl);
-                    });
-                } else {
-                    pastListsContainer.appendChild(emptyHistoryMessage);
-                }
-            };
-
-            const renderGroceryItemsManager = () => {
-                const container = document.getElementById('grocery-items-container');
-                 container.innerHTML = '';
-                const categories = [...new Set(groceryItems.map(item => item.category || 'Uncategorized'))].sort();
-                categories.forEach(category => {
-                    const categoryWrapper = document.createElement('div');
-                    categoryWrapper.innerHTML = `<h3 class="font-semibold text-lg text-gray-700 mb-2">${category}</h3>`;
-                    groceryItems.filter(item => (item.category || 'Uncategorized') === category).sort((a,b) => a.name.localeCompare(b.name)).forEach(item => {
-                        const isAdded = currentShoppingList.some(shopItem => shopItem.id === item.id);
-                        const itemEl = document.createElement('div');
-                        itemEl.className = 'flex justify-between items-center p-2 rounded-lg';
-                        itemEl.innerHTML = `<span>${item.name}</span><div class="flex items-center gap-2"><button data-id="${item.id}" class="add-to-list-btn text-xs font-bold py-1 px-3 rounded-full ${isAdded ? 'bg-gray-300' : 'bg-green-100 text-green-800'}" ${isAdded ? 'disabled' : ''}>${isAdded ? 'Added' : 'Add'}</button><button data-id="${item.id}" class="delete-grocery-item-btn text-red-500 hover:text-red-700 p-1 text-xl">&times;</button></div>`;
-                        categoryWrapper.appendChild(itemEl);
-                    });
-                    container.appendChild(categoryWrapper);
-                });
-            };
-
-            const renderSpendingReport = () => { /* ... same as before ... */ };
-
-            // --- RECIPE & PLANNER RENDER FUNCTIONS ---
-            const renderRecipeBook = () => {
-                const container = document.getElementById('recipes-content');
-                container.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-3 gap-6"><div class="md:col-span-1"><h3 class="text-xl font-semibold mb-2">My Recipes</h3><div id="recipe-list" class="space-y-2 max-h-96 overflow-y-auto pr-2 border rounded-lg p-2"></div></div><div id="recipe-details" class="md:col-span-2 p-4 border rounded-lg bg-gray-50"></div></div>`;
-                const recipeListEl = document.getElementById('recipe-list');
-                if (recipes.length > 0) {
-                    recipeListEl.innerHTML = recipes.map(r => `<div data-id="${r.id}" class="recipe-item p-2 rounded-md cursor-pointer hover:bg-indigo-100">${r.name}</div>`).join('');
-                } else {
-                    recipeListEl.innerHTML = `<p class="text-gray-500">No recipes yet.</p>`;
-                }
-                renderAddRecipeForm();
-            };
-
-            const renderAddRecipeForm = () => {
-                const detailsContainer = document.getElementById('recipe-details');
-                detailsContainer.innerHTML = `<h3 class="text-xl font-semibold mb-2">Add a New Recipe</h3><div id="add-recipe-form"><input type="text" id="new-recipe-name" placeholder="Recipe Name" class="w-full p-2 border rounded-md mb-2"><h4 class="font-semibold mb-1">Ingredients</h4><div id="new-recipe-ingredients" class="space-y-2 mb-2"></div><button id="add-ingredient-field-btn" type="button" class="text-sm text-blue-600 hover:underline mb-4">+ Add Ingredient</button><button id="save-recipe-btn" class="w-full bg-green-600 text-white py-2 rounded-lg">Save New Recipe</button></div>`;
-                addIngredientField();
-            };
-
-            const renderSelectedRecipe = (recipe) => {
-                const detailsContainer = document.getElementById('recipe-details');
-                let ingredientsHtml = recipe.ingredients.map(ing => `<li>${ing.quantity || ''} ${ing.unit || ''} ${ing.name}</li>`).join('');
-                detailsContainer.innerHTML = `<div class="flex justify-between items-start"><h3 class="text-2xl font-bold mb-2">${recipe.name}</h3><button data-id="${recipe.id}" class="edit-recipe-btn text-sm bg-gray-200 px-3 py-1 rounded-md hover:bg-gray-300">Edit</button></div><h4 class="font-semibold mb-1">Ingredients</h4><ul class="list-disc pl-5 mb-4">${ingredientsHtml}</ul><button data-id="${recipe.id}" class="add-recipe-to-list-btn w-full bg-blue-600 text-white py-2 rounded-lg mb-2">Add Ingredients to Shopping List</button><button id="show-add-recipe-form-btn" class="text-sm text-gray-600 hover:underline">← Back to Add Recipe</button>`;
-            };
-            
-            const renderEditRecipeForm = (recipe) => {
-                const detailsContainer = document.getElementById('recipe-details');
-                let ingredientsHtml = recipe.ingredients.map(ing => `<div class="grid grid-cols-5 gap-2 ingredient-field"><input type="text" value="${ing.name}" placeholder="Name" class="col-span-2 p-2 border rounded-md ing-name"><input type="number" value="${ing.quantity || ''}" placeholder="Qty" class="p-2 border rounded-md ing-qty"><input type="text" value="${ing.unit || ''}" placeholder="Unit" class="col-span-1 p-2 border rounded-md ing-unit"><button class="remove-ingredient-btn text-red-500 hover:text-red-700">Remove</button></div>`).join('');
-                detailsContainer.innerHTML = `<h3 class="text-xl font-semibold mb-2">Editing: ${recipe.name}</h3><div id="edit-recipe-form"><input type="text" id="edit-recipe-name" value="${recipe.name}" class="w-full p-2 border rounded-md mb-2"><h4 class="font-semibold mb-1">Ingredients</h4><div id="edit-recipe-ingredients" class="space-y-2 mb-2">${ingredientsHtml}</div><button id="add-ingredient-field-edit-btn" type="button" class="text-sm text-blue-600 hover:underline mb-4">+ Add Ingredient</button><button id="update-recipe-btn" data-id="${recipe.id}" class="w-full bg-green-600 text-white py-2 rounded-lg mb-2">Save Changes</button><button id="cancel-edit-btn" data-id="${recipe.id}" class="text-sm text-gray-600 hover:underline">Cancel</button></div>`;
-            };
-
-            const renderMealPlanner = () => {
-                const container = document.getElementById('planner-content');
-                const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-                let plannerHtml = `<div class="space-y-4">`;
-                days.forEach(day => {
-                    const dayKey = day.toLowerCase();
-                    plannerHtml += `<div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start"><h3 class="font-bold text-lg pt-2">${day}</h3><div class="bg-gray-50 p-2 rounded-lg">${generateMealSlotHtml(dayKey, 'lunch')}</div><div class="bg-gray-50 p-2 rounded-lg">${generateMealSlotHtml(dayKey, 'dinner')}</div></div>`;
-                });
-                plannerHtml += `<div class="mt-6 pt-4 border-t"><button id="add-weekly-ingredients-btn" class="w-full bg-purple-600 text-white py-3 rounded-lg font-bold text-lg">Add All Weekly Ingredients to List</button></div></div>`;
-                container.innerHTML = plannerHtml;
-            };
-
-            const generateMealSlotHtml = (dayKey, mealKey) => {
-                let mealItemsHtml = `<div class="text-gray-500 text-sm">Empty</div>`;
-                const mealData = mealPlan[dayKey]?.[mealKey];
-                if (mealData && mealData.length > 0) {
-                    mealItemsHtml = mealData.map((mealItem, index) => {
-                        let name = 'Unknown';
-                        if (mealItem.type === 'recipe') {
-                            const recipe = recipes.find(r => r.id === mealItem.id);
-                            if (recipe) name = `(R) ${recipe.name}`;
-                        } else if (mealItem.type === 'item') {
-                            const item = groceryItems.find(i => i.id === mealItem.id);
-                            if (item) name = item.name;
-                        }
-                        return `<div class="flex justify-between items-center text-sm bg-white p-1 rounded-md mb-1"><span>${name}</span><button data-day="${dayKey}" data-meal="${mealKey}" data-index="${index}" class="remove-meal-item-btn text-red-400 hover:text-red-600 font-bold px-1">&times;</button></div>`;
-                    }).join('');
-                }
-                return `<h4 class="font-semibold capitalize">${mealKey}</h4><div class="mt-1 space-y-1">${mealItemsHtml}</div><button data-day="${dayKey}" data-meal="${mealKey}" class="add-to-meal-btn text-sm text-blue-600 hover:underline mt-2">+ Add to Meal</button>`;
-            };
-
-            const populateMealItemSelector = () => {
-                const container = document.getElementById('meal-item-selection-container');
-                let content = `<div><h4 class="font-bold my-2">Recipes</h4>` + recipes.map(r => `<div class="flex items-center"><input type="checkbox" id="sel-recipe-${r.id}" value="recipe-${r.id}" class="meal-item-checkbox h-4 w-4 mr-2"><label for="sel-recipe-${r.id}">${r.name}</label></div>`).join('') + `</div>`;
-                content += `<div><h4 class="font-bold my-2">Individual Items</h4>` + groceryItems.map(i => `<div class="flex items-center"><input type="checkbox" id="sel-item-${i.id}" value="item-${i.id}" class="meal-item-checkbox h-4 w-4 mr-2"><label for="sel-item-${i.id}">${i.name}</label></div>`).join('') + `</div>`;
-                container.innerHTML = content;
-            };
-
-            // --- LOGIC FUNCTIONS ---
-            const calculateTotal = () => {
-                const total = currentShoppingList.reduce((acc, item) => item.purchased ? acc + (parseFloat(item.price) || 0) : acc, 0);
-                totalPriceEl.textContent = `$${total.toFixed(2)}`;
-            };
-            
-            const addIngredientField = (containerId = 'new-recipe-ingredients') => {
-                const container = document.getElementById(containerId);
-                const field = document.createElement('div');
-                field.className = 'grid grid-cols-5 gap-2 ingredient-field';
-                field.innerHTML = `<input type="text" placeholder="Name" class="col-span-2 p-2 border rounded-md ing-name"><input type="number" placeholder="Qty" class="p-2 border rounded-md ing-qty"><input type="text" placeholder="Unit" class="col-span-1 p-2 border rounded-md ing-unit"><button class="remove-ingredient-btn text-red-500 hover:text-red-700">Remove</button>`;
-                container.appendChild(field);
-            };
-
-            async function addItemToShoppingList(itemData, quantity = 1, unit = '') {
-                const existingItem = currentShoppingList.find(i => i.id === itemData.id);
-                if (existingItem) {
-                    existingItem.quantity = (parseFloat(existingItem.quantity) || 0) + (parseFloat(quantity) || 0);
-                    await dbTransaction('currentShoppingList', 'readwrite', store => store.put(existingItem));
-                } else {
-                    const shoppingItem = { ...itemData, purchased: false, price: '', quantity, unit };
-                    await dbTransaction('currentShoppingList', 'readwrite', store => store.put(shoppingItem));
-                    currentShoppingList.push(shoppingItem);
-                }
-            }
-
-            async function addRecipeIngredientsToList(recipeId) {
-                const recipe = recipes.find(r => r.id === recipeId);
-                if (!recipe) return;
-                let itemsAddedCount = 0;
-                for (const ing of recipe.ingredients) {
-                    const groceryItem = groceryItems.find(gi => gi.name.toLowerCase() === ing.name.toLowerCase());
-                    if (groceryItem) {
-                        if (!currentShoppingList.some(i => i.id === groceryItem.id)) itemsAddedCount++;
-                        await addItemToShoppingList(groceryItem, ing.quantity, ing.unit);
+        async function deleteSubcategory(categoryId, subcategoryName) {
+            showConfirmation('Delete Subcategory', 'Are you sure?', async () => {
+                const transaction = db.transaction(['categories'], 'readwrite');
+                const store = transaction.objectStore('categories');
+                const request = store.get(categoryId);
+                request.onsuccess = () => {
+                    const category = request.result;
+                    if (category) {
+                        category.subcategories = category.subcategories.filter(s => s !== subcategoryName);
+                        store.put(category);
+                        loadCategories();
+                        showNotification('Subcategory deleted.');
                     }
-                }
-                renderShoppingList();
-                showToast(`${itemsAddedCount} new item(s) added from '${recipe.name}'.`);
+                };
+            });
+        }
+
+        async function loadPeople() {
+            const people = await getAllObjects('people');
+            const list = document.getElementById('peopleList');
+            list.innerHTML = '';
+            people.forEach(person => {
+                const li = document.createElement('li');
+                li.className = 'flex justify-between items-center p-2 border-b';
+                li.innerHTML = `
+                    <span>${person.name} (Birthday: ${person.birthday})</span>
+                    <div>
+                        <button onclick="editPerson(${person.id})" class="text-blue-500 hover:underline">Edit</button>
+                        <button onclick="deletePerson(${person.id})" class="text-red-500 hover:underline ml-2">Delete</button>
+                    </div>
+                `;
+                list.appendChild(li);
+            });
+        }
+        
+        async function editPerson(id) {
+            const transaction = db.transaction(['people'], 'readonly');
+            const store = transaction.objectStore('people');
+            const request = store.get(id);
+            request.onsuccess = () => {
+                const person = request.result;
+                document.getElementById('personId').value = person.id;
+                document.getElementById('personName').value = person.name;
+                document.getElementById('personBirthday').value = person.birthday;
+            };
+        }
+
+        async function deletePerson(id) {
+            showConfirmation('Delete Person', 'Are you sure?', async () => {
+                await deleteObject('people', id);
+                loadPeople();
+                updateDashboard();
+                showNotification('Person deleted.');
+            });
+        }
+
+        // --- DASHBOARD & REPORTS ---
+        async function updateDashboard() {
+            const incomes = await getAllObjects('income');
+            const expenses = await getAllObjects('expenses');
+            const people = await getAllObjects('people');
+
+            const totalIncome = incomes.reduce((sum, item) => sum + item.amount, 0);
+            const totalExpenses = expenses.reduce((sum, item) => sum + item.amount, 0);
+            const balance = totalIncome - totalExpenses;
+
+            document.getElementById('summaryIncome').textContent = `$${totalIncome.toFixed(2)}`;
+            document.getElementById('summaryExpenses').textContent = `$${totalExpenses.toFixed(2)}`;
+            document.getElementById('summaryBalance').textContent = `$${balance.toFixed(2)}`;
+            
+            const upcomingBirthdaysList = document.getElementById('upcomingBirthdays');
+            upcomingBirthdaysList.innerHTML = '';
+            const today = new Date();
+            const upcoming = people.filter(p => {
+                const birthday = new Date(p.birthday);
+                birthday.setFullYear(today.getFullYear());
+                const diff = birthday.getTime() - today.getTime();
+                return diff > 0 && diff < (30 * 24 * 60 * 60 * 1000); // within 30 days
+            }).sort((a,b) => new Date(a.birthday) - new Date(b.birthday));
+
+            if (upcoming.length > 0) {
+                upcoming.forEach(p => {
+                    const li = document.createElement('li');
+                    li.textContent = `${p.name} on ${new Date(p.birthday).toLocaleDateString()}`;
+                    upcomingBirthdaysList.appendChild(li);
+                });
+            } else {
+                upcomingBirthdaysList.innerHTML = '<li>No upcoming birthdays in the next 30 days.</li>';
+            }
+        }
+
+        async function updateBudgetSummary() {
+            const allBudgets = await getAllObjects('budgets');
+            const allIncome = await getAllObjects('income');
+            const allSubscriptions = await getAllObjects('subscriptions');
+
+            const userBudgeted = allBudgets.reduce((sum, b) => sum + b.amount, 0);
+            const activeSubscriptions = allSubscriptions.filter(s => s.status === 'active');
+            const subscriptionCosts = activeSubscriptions.reduce((sum, s) => sum + s.amount, 0);
+            
+            const totalBudgeted = userBudgeted + subscriptionCosts;
+
+            const recurringIncome = allIncome
+                .filter(i => i.type === 'recurring')
+                .reduce((sum, i) => sum + i.amount, 0);
+            
+            const remaining = recurringIncome - totalBudgeted;
+
+            document.getElementById('summaryRecurringIncome').textContent = `$${recurringIncome.toFixed(2)}`;
+            document.getElementById('summaryTotalBudgeted').textContent = `$${totalBudgeted.toFixed(2)}`;
+            document.getElementById('summaryBudgetRemaining').textContent = `$${remaining.toFixed(2)}`;
+            
+            const remainingEl = document.getElementById('summaryBudgetRemaining');
+            const remainingContainer = remainingEl.parentElement;
+            
+            remainingContainer.className = remainingContainer.className.replace(/bg-blue-100|bg-red-100/g, '');
+            remainingEl.className = remainingEl.className.replace(/text-blue-600|text-red-600/g, '');
+            remainingContainer.parentElement.querySelector('.text-sm').className = remainingContainer.parentElement.querySelector('.text-sm').className.replace(/text-blue-800|text-red-800/g, '');
+
+
+            if (remaining >= 0) {
+                remainingContainer.classList.add('bg-blue-100');
+                remainingEl.classList.add('text-blue-600');
+                 remainingContainer.parentElement.querySelector('.text-sm').classList.add('text-blue-800');
+            } else {
+                remainingContainer.classList.add('bg-red-100');
+                remainingEl.classList.add('text-red-600');
+                remainingContainer.parentElement.querySelector('.text-sm').classList.add('text-red-800');
+            }
+
+            // Payment Method Summary
+            const paymentTotals = {};
+            allBudgets.forEach(b => {
+                const method = b.paymentMethod || 'Unassigned';
+                paymentTotals[method] = (paymentTotals[method] || 0) + b.amount;
+            });
+            activeSubscriptions.forEach(s => {
+                const method = s.paymentMethod || 'Unassigned';
+                paymentTotals[method] = (paymentTotals[method] || 0) + s.amount;
+            });
+
+            const summaryEl = document.getElementById('budgetPaymentMethodSummary');
+            summaryEl.innerHTML = '<h3 class="text-xl font-semibold mb-2">Budgeted by Payment Method</h3>';
+            const list = document.createElement('div');
+            list.className = 'grid grid-cols-2 md:grid-cols-4 gap-2 text-sm';
+            for (const method in paymentTotals) {
+                const item = document.createElement('div');
+                item.className = 'bg-gray-100 p-2 rounded-md';
+                item.innerHTML = `<p class="font-semibold">${method}</p><p>$${paymentTotals[method].toFixed(2)}</p>`;
+                list.appendChild(item);
+            }
+            summaryEl.appendChild(list);
+        }
+
+        async function generateReports() {
+            const reportMonthValue = document.getElementById('reportMonth').value;
+            const incomeExpenseReportEl = document.getElementById('incomeExpenseReport');
+            const budgetActualReportEl = document.getElementById('budgetActualReport');
+            const categorySpendReportEl = document.getElementById('categorySpendReport');
+            const paymentTypeSpendReportEl = document.getElementById('paymentTypeSpendReport');
+
+            if (!reportMonthValue) {
+                incomeExpenseReportEl.innerHTML = '<p>Select a month to view reports.</p>';
+                budgetActualReportEl.innerHTML = '';
+                categorySpendReportEl.innerHTML = '';
+                paymentTypeSpendReportEl.innerHTML = '';
+                return;
+            }
+
+            const allExpenses = await getAllObjects('expenses');
+            const allBudgets = await getAllObjects('budgets');
+            const allSubscriptions = await getAllObjects('subscriptions');
+            const allIncome = await getAllObjects('income');
+
+            // --- Calculations ---
+            const monthlyExpenses = allExpenses.filter(expense => expense.date.startsWith(reportMonthValue));
+            const activeSubscriptions = allSubscriptions.filter(s => s.status === 'active');
+            const totalSubscriptionCost = activeSubscriptions.reduce((sum, s) => sum + s.amount, 0);
+            
+            const monthlyIncome = allIncome.filter(i => {
+                if (i.type === 'recurring') return true;
+                if (i.type === 'one-time' && i.date && i.date.startsWith(reportMonthValue)) return true;
+                return false;
+            });
+            const totalMonthlyIncome = monthlyIncome.reduce((sum, i) => sum + i.amount, 0);
+
+            const totalMonthlyExpenses = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0) + totalSubscriptionCost;
+            const netBalance = totalMonthlyIncome - totalMonthlyExpenses;
+
+            // --- 1. Income vs. Expense Report ---
+            incomeExpenseReportEl.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                    <div class="p-4 bg-green-100 rounded-lg">
+                        <p class="text-sm text-green-800">Total Income</p>
+                        <p class="text-2xl font-bold text-green-600">$${totalMonthlyIncome.toFixed(2)}</p>
+                    </div>
+                    <div class="p-4 bg-red-100 rounded-lg">
+                        <p class="text-sm text-red-800">Total Expenses</p>
+                        <p class="text-2xl font-bold text-red-600">$${totalMonthlyExpenses.toFixed(2)}</p>
+                    </div>
+                    <div class="p-4 rounded-lg ${netBalance >= 0 ? 'bg-blue-100' : 'bg-orange-100'}">
+                        <p class="text-sm ${netBalance >= 0 ? 'text-blue-800' : 'text-orange-800'}">Net Balance</p>
+                        <p class="text-2xl font-bold ${netBalance >= 0 ? 'text-blue-600' : 'text-orange-600'}">$${netBalance.toFixed(2)}</p>
+                    </div>
+                </div>
+            `;
+            
+            // --- 2. Budget vs. Actual Report ---
+            budgetActualReportEl.innerHTML = ''; 
+            const totalBudgeted = allBudgets.reduce((sum, b) => sum + b.amount, 0);
+            
+            const reportData = allBudgets.map(budget => {
+                const actualSpend = monthlyExpenses
+                    .filter(e => e.category === budget.category && e.subcategory === budget.subcategory)
+                    .reduce((sum, e) => sum + e.amount, 0);
+                return { ...budget, actualSpend };
+            });
+
+            if (activeSubscriptions.length > 0) {
+                reportData.push({
+                    category: 'Subscriptions',
+                    subcategory: 'Recurring',
+                    amount: 0, 
+                    actualSpend: totalSubscriptionCost
+                });
+            }
+
+            if (reportData.length === 0) {
+                budgetActualReportEl.innerHTML = '<p>No budgets or subscriptions to report.</p>';
+            } else {
+                const table = document.createElement('table');
+                table.className = 'min-w-full bg-white';
+                table.innerHTML = `
+                    <thead class="bg-gray-200">
+                        <tr>
+                            <th class="py-2 px-4 text-left">Category</th>
+                            <th class="py-2 px-4 text-left">Subcategory</th>
+                            <th class="py-2 px-4 text-right">Budgeted</th>
+                            <th class="py-2 px-4 text-right">Actual</th>
+                            <th class="py-2 px-4 text-right">Difference</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${reportData.map(item => {
+                            const difference = item.amount - item.actualSpend;
+                            const diffClass = difference >= 0 ? 'text-green-600' : 'text-red-600';
+                            return `
+                                <tr>
+                                    <td class="border px-4 py-2">${item.category}</td>
+                                    <td class="border px-4 py-2">${item.subcategory}</td>
+                                    <td class="border px-4 py-2 text-right">$${item.amount.toFixed(2)}</td>
+                                    <td class="border px-4 py-2 text-right">$${item.actualSpend.toFixed(2)}</td>
+                                    <td class="border px-4 py-2 text-right font-medium ${diffClass}">$${difference.toFixed(2)}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                         <tr class="font-bold bg-gray-100">
+                            <td class="border px-4 py-2" colspan="2">Total</td>
+                            <td class="border px-4 py-2 text-right">$${totalBudgeted.toFixed(2)}</td>
+                            <td class="border px-4 py-2 text-right">$${totalMonthlyExpenses.toFixed(2)}</td>
+                            <td class="border px-4 py-2 text-right ${totalBudgeted - totalMonthlyExpenses >= 0 ? 'text-green-600' : 'text-red-600'}">$${(totalBudgeted - totalMonthlyExpenses).toFixed(2)}</td>
+                        </tr>
+                    </tbody>
+                `;
+                budgetActualReportEl.appendChild(table);
+            }
+
+            // --- 3. Spend by Category Report ---
+            const categorySpend = monthlyExpenses.reduce((acc, expense) => {
+                acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
+                return acc;
+            }, {});
+            if (totalSubscriptionCost > 0) {
+                categorySpend['Subscriptions'] = totalSubscriptionCost;
             }
             
-            async function addWeeklyIngredientsToList() {
-                const weeklyIngredients = {};
-                for (const dayPlan of Object.values(mealPlan)) {
-                    for (const mealArray of Object.values(dayPlan)) {
-                        for (const mealItem of mealArray) {
-                            if (mealItem.type === 'recipe') {
-                                const recipe = recipes.find(r => r.id === mealItem.id);
-                                if (recipe) {
-                                    recipe.ingredients.forEach(ing => {
-                                        const key = ing.name.toLowerCase();
-                                        if (!weeklyIngredients[key]) weeklyIngredients[key] = { name: ing.name, quantity: 0, unit: ing.unit };
-                                        weeklyIngredients[key].quantity += parseFloat(ing.quantity) || 0;
-                                    });
-                                }
-                            } else if (mealItem.type === 'item') {
-                                const item = groceryItems.find(i => i.id === mealItem.id);
-                                if (item) {
-                                    const key = item.name.toLowerCase();
-                                    if (!weeklyIngredients[key]) weeklyIngredients[key] = { name: item.name, quantity: 0, unit: '' };
-                                    weeklyIngredients[key].quantity += 1;
-                                }
+            categorySpendReportEl.innerHTML = '';
+            if (Object.keys(categorySpend).length > 0) {
+                const ul = document.createElement('ul');
+                ul.className = 'list-disc list-inside';
+                for (const category in categorySpend) {
+                    const li = document.createElement('li');
+                    li.textContent = `${category}: $${categorySpend[category].toFixed(2)}`;
+                    ul.appendChild(li);
+                }
+                categorySpendReportEl.appendChild(ul);
+            } else {
+                categorySpendReportEl.innerHTML = '<p>No expenses recorded for this month.</p>';
+            }
+
+            // --- 4. Spend by Payment Type Report ---
+            const paymentTypeSpend = monthlyExpenses.reduce((acc, expense) => {
+                acc[expense.paymentType] = (acc[expense.paymentType] || 0) + expense.amount;
+                return acc;
+            }, {});
+
+            paymentTypeSpendReportEl.innerHTML = '';
+             if (Object.keys(paymentTypeSpend).length > 0) {
+                const ul = document.createElement('ul');
+                ul.className = 'list-disc list-inside';
+                for (const type in paymentTypeSpend) {
+                    const li = document.createElement('li');
+                    li.textContent = `${type}: $${paymentTypeSpend[type].toFixed(2)}`;
+                    ul.appendChild(li);
+                }
+                paymentTypeSpendReportEl.appendChild(ul);
+            } else {
+                paymentTypeSpendReportEl.innerHTML = '<p>No expenses recorded for this month.</p>';
+            }
+        }
+        
+        // --- EVENT LISTENERS for Category/Subcategory dropdowns ---
+        document.getElementById('expenseCategory').addEventListener('change', (e) => handleCategoryChange(e.target.value, 'expenseSubcategory'));
+        document.getElementById('budgetCategory').addEventListener('change', (e) => handleCategoryChange(e.target.value, 'budgetSubcategory'));
+
+        async function handleCategoryChange(categoryName, subcategorySelectId) {
+            const categories = await getAllObjects('categories');
+            const selectedCategory = categories.find(c => c.name === categoryName);
+            const subcategorySelect = document.getElementById(subcategorySelectId);
+            subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
+            if (selectedCategory) {
+                selectedCategory.subcategories.forEach(sub => {
+                    const option = document.createElement('option');
+                    option.value = sub;
+                    option.textContent = sub;
+                    subcategorySelect.appendChild(option);
+                });
+            }
+        }
+        
+        async function handleCategoryChangeForEdit(categoryName, subcategoryNameToSelect, subcategorySelectId = 'expenseSubcategory') {
+            await handleCategoryChange(categoryName, subcategorySelectId);
+            document.getElementById(subcategorySelectId).value = subcategoryNameToSelect;
+        }
+
+        // --- CALENDAR LOGIC ---
+        async function renderExpenseCalendar(year, month) {
+            const calendarHeader = document.getElementById('calendarHeader');
+            const calendarGrid = document.getElementById('calendarGrid');
+            if (!calendarHeader || !calendarGrid) return;
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDay = firstDay.getDay();
+
+            calendarHeader.textContent = `${firstDay.toLocaleString('default', { month: 'long' })} ${year}`;
+
+            const allExpenses = await getAllObjects('expenses');
+            const allSubscriptions = await getAllObjects('subscriptions');
+            const dailyItems = {};
+            const monthString = `${year}-${(month + 1).toString().padStart(2, '0')}`;
+            
+            allExpenses
+                .filter(e => e.date.startsWith(monthString))
+                .forEach(e => {
+                    const day = new Date(e.date + 'T00:00:00').getDate();
+                    if (!dailyItems[day]) {
+                        dailyItems[day] = [];
+                    }
+                    dailyItems[day].push(e);
+                });
+
+            allSubscriptions
+                .filter(s => s.status === 'active')
+                .forEach(s => {
+                    const subDay = new Date(s.startDate + 'T00:00:00').getDate();
+                    if (subDay <= daysInMonth) {
+                         if (!dailyItems[subDay]) {
+                            dailyItems[subDay] = [];
+                        }
+                        dailyItems[subDay].push({ payee: s.name, amount: s.amount, isSubscription: true });
+                    }
+                });
+
+            calendarGrid.innerHTML = '';
+            for (let i = 0; i < startingDay; i++) {
+                calendarGrid.innerHTML += `<div class="border p-2 bg-gray-50 rounded-md"></div>`;
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const itemsForDay = dailyItems[day] || [];
+                let itemsHTML = '';
+                if (itemsForDay.length > 0) {
+                    itemsHTML = '<ul class="text-xs text-left mt-1 space-y-0.5 overflow-y-auto max-h-16">';
+                    itemsForDay.forEach(item => {
+                        const colorClass = item.isSubscription ? 'text-blue-600' : 'text-red-600';
+                        itemsHTML += `<li class="truncate ${colorClass}"><span class="font-semibold">$${item.amount.toFixed(2)}</span> ${item.payee}</li>`;
+                    });
+                    itemsHTML += '</ul>';
+                }
+
+                let cellHTML = `<div class="border p-2 h-28 flex flex-col bg-white rounded-md">
+                                  <span class="font-semibold">${day}</span>
+                                  ${itemsHTML}
+                              </div>`;
+                calendarGrid.innerHTML += cellHTML;
+            }
+        }
+
+        function setupCalendarNav() {
+            document.getElementById('prevMonth').addEventListener('click', () => {
+                calendarDate.setMonth(calendarDate.getMonth() - 1);
+                renderExpenseCalendar(calendarDate.getFullYear(), calendarDate.getMonth());
+            });
+            document.getElementById('nextMonth').addEventListener('click', () => {
+                calendarDate.setMonth(calendarDate.getMonth() + 1);
+                renderExpenseCalendar(calendarDate.getFullYear(), calendarDate.getMonth());
+            });
+        }
+
+        // --- MODAL & NOTIFICATION LOGIC ---
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            const messageEl = document.getElementById('notificationMessage');
+
+            messageEl.textContent = message;
+            notification.className = notification.className.replace(/bg-gray-800|bg-red-600/g, '');
+            notification.classList.add(isError ? 'bg-red-600' : 'bg-gray-800');
+            notification.classList.remove('translate-y-20', 'opacity-0');
+
+            setTimeout(() => {
+                notification.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function showConfirmation(title, message, onConfirm) {
+            const modal = document.getElementById('confirmationModal');
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+
+            const confirmBtn = document.getElementById('modalConfirm');
+            const cancelBtn = document.getElementById('modalCancel');
+
+            const confirmHandler = () => {
+                onConfirm();
+                closeModal();
+            };
+
+            const cancelHandler = () => closeModal();
+            
+            const newConfirmBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+            newConfirmBtn.addEventListener('click', confirmHandler, { once: true });
+
+            const newCancelBtn = cancelBtn.cloneNode(true);
+            cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+            newCancelBtn.addEventListener('click', cancelHandler, { once: true });
+
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('confirmationModal').classList.remove('active');
+        }
+
+        // --- ITEMIZATION LOGIC ---
+        async function openItemizationModal(expenseId) {
+            const modal = document.getElementById('itemizationModal');
+            document.getElementById('itemizationExpenseId').value = expenseId;
+            
+            const expense = await getObject('expenses', expenseId);
+            if (!expense) return;
+
+            document.getElementById('itemizationModalTitle').textContent = `Itemize: ${expense.payee}`;
+            document.getElementById('itemizationTotal').textContent = `$${expense.amount.toFixed(2)}`;
+            
+            await renderItemizedList(expense);
+
+            modal.classList.add('active');
+        }
+
+        async function renderItemizedList(expense) {
+            const listEl = document.getElementById('itemizedList');
+            listEl.innerHTML = '';
+            let itemizedTotal = 0;
+
+            if (expense.items && expense.items.length > 0) {
+                expense.items.forEach((item, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'flex justify-between items-center p-2';
+                    li.innerHTML = `
+                        <span>${item.name}</span>
+                        <div>
+                            <span class="font-medium mr-4">$${item.amount.toFixed(2)}</span>
+                            <button onclick="deleteItemizedEntry(${expense.id}, ${index})" class="text-red-500 hover:underline">x</button>
+                        </div>
+                    `;
+                    listEl.appendChild(li);
+                    itemizedTotal += item.amount;
+                });
+            }
+            
+            const remaining = expense.amount - itemizedTotal;
+            const remainingEl = document.getElementById('itemizationRemaining');
+            remainingEl.textContent = `$${remaining.toFixed(2)}`;
+            remainingEl.className = 'font-bold text-lg ';
+            remainingEl.classList.add(remaining < 0 ? 'text-red-500' : 'text-green-600');
+        }
+
+        document.getElementById('itemizationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const expenseId = parseInt(document.getElementById('itemizationExpenseId').value);
+            const itemName = document.getElementById('itemName').value;
+            const itemAmount = parseFloat(document.getElementById('itemAmount').value);
+
+            const expense = await getObject('expenses', expenseId);
+            if (!expense) return;
+
+            if (!expense.items) {
+                expense.items = [];
+            }
+            expense.items.push({ name: itemName, amount: itemAmount });
+
+            await updateObject('expenses', expense);
+            await renderItemizedList(expense);
+            await loadExpenses(); // To update the "View Items" button
+            e.target.reset();
+        });
+
+        async function deleteItemizedEntry(expenseId, itemIndex) {
+            const expense = await getObject('expenses', expenseId);
+            if (!expense || !expense.items) return;
+
+            expense.items.splice(itemIndex, 1);
+            await updateObject('expenses', expense);
+            await renderItemizedList(expense);
+            await loadExpenses();
+        }
+
+        document.getElementById('itemizationDone').addEventListener('click', () => {
+            document.getElementById('itemizationModal').classList.remove('active');
+        });
+
+
+        // --- DATA MANAGEMENT ---
+        async function exportData() {
+            try {
+                const stores = ['income', 'expenses', 'subscriptions', 'budgets', 'paymentMethods', 'categories', 'people'];
+                const exportObject = {};
+
+                for (const storeName of stores) {
+                    exportObject[storeName] = await getAllObjects(storeName);
+                }
+
+                const jsonString = JSON.stringify(exportObject, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `home-budget-backup-${new Date().toISOString().slice(0, 10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                showNotification('Data exported successfully!');
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                showNotification('Failed to export data.', true);
+            }
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const onConfirmImport = () => {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        const stores = ['income', 'expenses', 'subscriptions', 'budgets', 'paymentMethods', 'categories', 'people'];
+
+                        for (const storeName of stores) {
+                            if (!data.hasOwnProperty(storeName) || !Array.isArray(data[storeName])) {
+                                throw new Error(`Invalid or missing data for: ${storeName}`);
                             }
                         }
+
+                        const transaction = db.transaction(stores, 'readwrite');
+                        for (const storeName of stores) {
+                            await new Promise((resolve, reject) => {
+                                const request = transaction.objectStore(storeName).clear();
+                                request.onsuccess = resolve;
+                                request.onerror = reject;
+                            });
+                        }
+                        
+                        const importTransaction = db.transaction(stores, 'readwrite');
+                        for (const storeName of stores) {
+                            const store = importTransaction.objectStore(storeName);
+                            for (const item of data[storeName]) {
+                                if (item.hasOwnProperty('id')) delete item.id;
+                                store.add(item);
+                            }
+                        }
+
+                        await new Promise((resolve, reject) => {
+                            importTransaction.oncomplete = resolve;
+                            importTransaction.onerror = reject;
+                        });
+                        
+                        await reloadAllData();
+                        showNotification('Data imported successfully!');
+                    } catch (error) {
+                        console.error('Error importing data:', error);
+                        showNotification(`Import failed: ${error.message}`, true);
                     }
-                }
-
-                let itemsAddedCount = 0;
-                for (const ing of Object.values(weeklyIngredients)) {
-                    const groceryItem = groceryItems.find(gi => gi.name.toLowerCase() === ing.name.toLowerCase());
-                    if (groceryItem) {
-                         if (!currentShoppingList.some(i => i.id === groceryItem.id)) itemsAddedCount++;
-                        await addItemToShoppingList(groceryItem, ing.quantity, ing.unit);
-                    }
-                }
-                renderShoppingList();
-                showToast(`${itemsAddedCount} new item(s) added from your meal plan.`);
-            }
-
-            // --- EVENT LISTENERS ---
-            hamburgerBtn.addEventListener('click', () => {
-                mainNav.classList.toggle('hidden');
-            });
-
-            document.getElementById('manage-items-btn').addEventListener('click', () => document.getElementById('items-modal').classList.add('active'));
-            document.getElementById('close-items-modal-btn').addEventListener('click', () => document.getElementById('items-modal').classList.remove('active'));
-            document.getElementById('view-reports-btn').addEventListener('click', () => { renderSpendingReport(); document.getElementById('reports-modal').classList.add('active'); });
-            document.getElementById('close-reports-modal-btn').addEventListener('click', () => document.getElementById('reports-modal').classList.remove('active'));
-            document.getElementById('planner-recipes-btn').addEventListener('click', () => document.getElementById('planner-recipes-modal').classList.add('active'));
-            document.getElementById('close-planner-modal-btn').addEventListener('click', () => document.getElementById('planner-recipes-modal').classList.remove('active'));
-            document.getElementById('close-add-meal-item-modal-btn').addEventListener('click', () => document.getElementById('add-meal-item-modal').classList.remove('active'));
-
-            document.getElementById('planner-tabs').addEventListener('click', (e) => {
-                if (e.target.classList.contains('tab-button')) {
-                    const tabName = e.target.dataset.tab;
-                    document.querySelectorAll('#planner-tabs .tab-button').forEach(btn => btn.classList.remove('active'));
-                    e.target.classList.add('active');
-                    document.querySelectorAll('#planner-recipes-modal .tab-content').forEach(content => content.classList.remove('active'));
-                    document.getElementById(`${tabName}-content`).classList.add('active');
-                }
-            });
-
-            document.getElementById('planner-recipes-modal').addEventListener('click', async (e) => {
-                const target = e.target;
-                if (target.id === 'add-ingredient-field-btn') addIngredientField();
-                if (target.id === 'add-ingredient-field-edit-btn') addIngredientField('edit-recipe-ingredients');
-                if (target.classList.contains('remove-ingredient-btn')) target.closest('.ingredient-field').remove();
-                if (target.classList.contains('recipe-item')) renderSelectedRecipe(recipes.find(r => r.id === parseInt(target.dataset.id)));
-                if (target.id === 'show-add-recipe-form-btn') renderAddRecipeForm();
-                if (target.classList.contains('add-recipe-to-list-btn')) addRecipeIngredientsToList(parseInt(target.dataset.id));
-                if (target.id === 'add-weekly-ingredients-btn') addWeeklyIngredientsToList();
-                if (target.classList.contains('edit-recipe-btn')) renderEditRecipeForm(recipes.find(r => r.id === parseInt(target.dataset.id)));
-                if (target.id === 'cancel-edit-btn') renderSelectedRecipe(recipes.find(r => r.id === parseInt(target.dataset.id)));
-
-                if (target.id === 'save-recipe-btn') {
-                    const name = document.getElementById('new-recipe-name').value.trim();
-                    if (!name) { showToast('Recipe name is required.', 'error'); return; }
-                    const ingredients = [];
-                    document.querySelectorAll('#new-recipe-ingredients .ingredient-field').forEach(field => {
-                        const ingName = field.querySelector('.ing-name').value.trim();
-                        if (ingName) ingredients.push({ name: ingName, quantity: parseFloat(field.querySelector('.ing-qty').value) || null, unit: field.querySelector('.ing-unit').value.trim() || null });
-                    });
-                    const newRecipe = { name, ingredients };
-                    const newId = await dbTransaction('recipes', 'readwrite', store => store.add(newRecipe));
-                    recipes.push({ id: newId, ...newRecipe });
-                    renderRecipeBook();
-                    renderMealPlanner();
-                    showToast('Recipe saved!');
-                }
-
-                if (target.id === 'update-recipe-btn') {
-                    const recipeId = parseInt(target.dataset.id);
-                    const recipeToUpdate = recipes.find(r => r.id === recipeId);
-                    if (!recipeToUpdate) return;
-                    recipeToUpdate.name = document.getElementById('edit-recipe-name').value.trim();
-                    recipeToUpdate.ingredients = [];
-                    document.querySelectorAll('#edit-recipe-ingredients .ingredient-field').forEach(field => {
-                        const ingName = field.querySelector('.ing-name').value.trim();
-                        if (ingName) recipeToUpdate.ingredients.push({ name: ingName, quantity: parseFloat(field.querySelector('.ing-qty').value) || null, unit: field.querySelector('.ing-unit').value.trim() || null });
-                    });
-                    await dbTransaction('recipes', 'readwrite', store => store.put(recipeToUpdate));
-                    renderSelectedRecipe(recipeToUpdate);
-                    renderMealPlanner();
-                    showToast('Recipe updated!');
-                }
-
-                if (target.classList.contains('add-to-meal-btn')) {
-                    currentMealTarget.day = target.dataset.day;
-                    currentMealTarget.meal = target.dataset.meal;
-                    document.getElementById('add-meal-item-modal-title').textContent = `Add to ${capitalize(currentMealTarget.meal)} on ${capitalize(currentMealTarget.day)}`;
-                    populateMealItemSelector();
-                    document.getElementById('add-meal-item-modal').classList.add('active');
-                }
-
-                if (target.classList.contains('remove-meal-item-btn')) {
-                    const { day, meal, index } = target.dataset;
-                    if (mealPlan[day]?.[meal]) {
-                        mealPlan[day][meal].splice(index, 1);
-                        await dbTransaction('mealPlan', 'readwrite', store => store.put({ id: 'currentWeek', days: mealPlan }));
-                        renderMealPlanner();
-                        showToast('Item removed from meal.');
-                    }
-                }
-            });
-
-            document.getElementById('save-meal-items-btn').addEventListener('click', async () => {
-                const { day, meal } = currentMealTarget;
-                if (!day || !meal) return;
-                if (!mealPlan[day]) mealPlan[day] = {};
-                if (!mealPlan[day][meal]) mealPlan[day][meal] = [];
-                document.querySelectorAll('.meal-item-checkbox:checked').forEach(checkbox => {
-                    const [type, id] = checkbox.value.split('-');
-                    if (!mealPlan[day][meal].some(item => item.type === type && item.id === parseInt(id))) {
-                        mealPlan[day][meal].push({ type, id: parseInt(id) });
-                    }
-                });
-                await dbTransaction('mealPlan', 'readwrite', store => store.put({ id: 'currentWeek', days: mealPlan }));
-                renderMealPlanner();
-                document.getElementById('add-meal-item-modal').classList.remove('active');
-                showToast('Meal updated.');
-            });
+                };
+                reader.readAsText(file);
+            };
             
-            // --- INITIALIZATION ---
-            await openDB();
-            await loadDataFromDB();
-            renderAll();
-        });
+            showConfirmation('Import Data', 'This will overwrite all current data. Are you sure?', onConfirmImport);
+            event.target.value = null;
+        }
+
     </script>
 </body>
 </html>
